@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fm-dlp-core"
+version = "0.1.0"
+description = "Core containing utilities for searching from Youtube/YTMusic and downloading audio/video from 1000+ sites"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-3.0-only"
+authors = [
+    {name = "Fkernel653"}
+]
+keywords = [
+    "framework",
+    "library",
+    "libraries",
+    "lib",
+    "youtube",
+    "ytmusic",
+    "youtube-music",
+    "yt-dlp",
+    "yt-dlp-wrapper",
+    "ffmpeg",
+    "gplv3",
+]
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "yt-dlp",
+    "ytmusicapi",
+    "mutagen",
+]
+
+[project.optional-dependencies]
+dev = ["ruff"]
+
+[project.urls]
+Homepage = "https://github.com/Fkernel653/fm-dlp"
+Repository = "https://github.com/Fkernel653/fm-dlp.git"
+Documentation = "https://github.com/Fkernel653/fm-dlp#readme"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fm_dlp_core"]
