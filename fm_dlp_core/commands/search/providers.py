@@ -11,8 +11,8 @@ from .formatters import ResultFormatter
 class BaseProvider(ABC):
     """Abstract base class for search providers."""
 
-    def __init__(self, formatter=ResultFormatter):
-        self.formatter = formatter
+    def __init__(self, color: bool, error_prefix: str, formatter=None):
+        self.formatter = formatter or ResultFormatter(color, error_prefix)
 
     @abstractmethod
     def _extract_results(self, query: str, limit: int, is_track: bool) -> list:
@@ -76,7 +76,7 @@ class BaseProvider(ABC):
         except KeyboardInterrupt:
             return
         except Exception as e:
-            yield self.formatter.fmt_error(f"Search Error: {e}")
+            yield self.formatter.fmt_error(str(e))  # type: ignore
             return
 
 
@@ -90,11 +90,12 @@ class YouTubeProvider(BaseProvider):
             "quiet": True,
             "extract_flat": True,
             "cachedir": False,
+            "extractor_retries": 0,
             "extractor_args": {
                 "youtube": {
                     "player_client": ["web", "ios"],
                     "player_skip": ["configs", "js", "webpage", "authcheck"],
-                }
+                },
             },
         }
 
@@ -142,18 +143,16 @@ class YouTubeMusicProvider(BaseProvider):
         return YTMusic().search(query=query, limit=limit, filter=search_type)
 
     def _extract_url(self, entry: dict[str, Any], is_track: bool) -> str | None:
-        if is_track:
-            if t_id := entry.get("videoId"):
-                return "https://music.youtube.com/watch?v=" + t_id
-        else:
-            if pl_id := entry.get("playlistId"):
-                return "https://music.youtube.com/playlist?list=" + pl_id
+        if is_track and (t_id := entry.get("videoId")):
+            return "https://music.youtube.com/watch?v=" + t_id
+        elif pl_id := entry.get("playlistId"):
+            return "https://music.youtube.com/playlist?list=" + pl_id
         return None
 
     def _fmt_entry(self, entry: dict[str, Any], num: int, is_track: bool) -> str | None:
         if is_track:
             return self.formatter.fmt_result(
-                num,
+                num=num,
                 title=entry.get("title", "Unknown Track"),
                 artist=self.formatter.extract_artist(entry),
                 album=entry.get("album", {}).get("name", "Unknown Album"),
@@ -165,7 +164,7 @@ class YouTubeMusicProvider(BaseProvider):
             )
         else:
             return self.formatter.fmt_result(
-                num,
+                num=num,
                 title=entry.get("title", "Unknown Album"),
                 artist=self.formatter.extract_artist(entry),
                 url=self._extract_url(entry, is_track),

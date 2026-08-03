@@ -28,15 +28,15 @@ CONFIG_DIR = get_config_dir()
 CONFIG_FILE = Path(CONFIG_DIR) / "config.json"
 
 
-def save_config(data: dict, encoding: str = "utf-8") -> bool:
-    """Save configuration data to JSON file.
+def update_config(data: dict, encoding: str = "utf-8") -> bool:
+    """Update configuration data to JSON file.
 
     Args:
-        data: Dictionary containing configuration data to save.
+        data: Dictionary containing configuration data to update.
         encoding: File encoding (default: utf-8).
 
     Returns:
-        True if configuration was saved successfully, False otherwise.
+        True if configuration was updated successfully, False otherwise.
     """
 
     try:

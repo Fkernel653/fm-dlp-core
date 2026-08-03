@@ -6,7 +6,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 from yt_dlp import YoutubeDL
 
-from ...utils import VIDEO_CONTAINERS, echo, sys
+from ...utils import VIDEO_CONTAINERS, echo
 from ...utils.colors import BOLD_YELLOW, RESET, info, set_colors, success
 from .config import DownloadConfig
 from .options_builder import OptionsBuilder
@@ -190,5 +190,5 @@ async def run_downloader(
     ) as dl:
         try:
             await dl.download_all()
-        except Exception as e:
-            echo(str(e), file=sys.stderr)
+        except Exception:
+            return

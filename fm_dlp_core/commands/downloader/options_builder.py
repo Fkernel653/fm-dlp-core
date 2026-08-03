@@ -42,13 +42,12 @@ class OptionsBuilder:
         if self.quality == "worst":
             return "worstvideo"
 
-        quality_str = self.quality
-        if quality_str.isdigit():
-            height = quality_str
+        if self.quality.isdigit():
+            height = self.quality
             return f"bestvideo[height<={height}]"
 
-        elif quality_str.endswith("p") and quality_str[:-1].isdigit():
-            height = quality_str[:-1]
+        elif self.quality.endswith("p") and self.quality[:-1].isdigit():
+            height = self.quality[:-1]
             return f"bestvideo[height<={height}]"
 
         return self.quality
@@ -89,8 +88,7 @@ class OptionsBuilder:
 
     def _build_video_opts(self, opts: dict[str, Any]) -> None:
         """Build options for video-only download."""
-        quality_fmt = self._parse_quality()
-        opts["format"] = quality_fmt
+        opts["format"] = self._parse_quality()
 
         if self.codec in VIDEO_CONTAINERS:
             opts["postprocessors"].append(
@@ -132,9 +130,8 @@ class OptionsBuilder:
     def _build_video_with_audio_opts(self, opts: dict[str, Any]) -> None:
         """Build options for video download with audio."""
         audio_ext = VIDEO_CONTAINER_AUDIO_MAP[self.codec]
-        quality_fmt = self._parse_quality()
 
-        opts["format"] = f"{quality_fmt}+bestaudio[ext={audio_ext}]/best"
+        opts["format"] = f"{self._parse_quality()}+bestaudio[ext={audio_ext}]/best"
 
         opts["postprocessors"].append(
             {

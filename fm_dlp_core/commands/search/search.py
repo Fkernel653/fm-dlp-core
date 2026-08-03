@@ -38,9 +38,12 @@ class Search:
 
         set_colors(color)
 
-        self.formatter = ResultFormatter(color)
-        self.yt_provider = YouTubeProvider(self.formatter)
-        self.ytm_provider = YouTubeMusicProvider(self.formatter)
+        self.error_prefix = "Search Error: "
+        self.formatter = ResultFormatter(color, self.error_prefix)
+        self.yt_provider = YouTubeProvider(color, self.error_prefix, self.formatter)
+        self.ytm_provider = YouTubeMusicProvider(
+            color, self.error_prefix, self.formatter
+        )
 
     def search(self) -> Generator[str, None, None]:
         """Perform search using appropriate provider."""

@@ -1,14 +1,15 @@
 """Result formatting utilities for search results."""
 
-from ...utils.colors import BOLD_CYAN, BOLD_RED, BOLD_WHITE, GRAY, RESET, WHITE, styled
+from ...utils.colors import BOLD_CYAN, BOLD_RED, BOLD_WHITE, GRAY, RESET, WHITE
 
 
 class ResultFormatter:
     """Format search results with optional metadata and colors."""
 
-    def __init__(self, color: bool):
+    def __init__(self, color: bool, error_prefix: str):
         """Initialize formatter with color settings."""
         self.color = color
+        self.error_prefix = error_prefix
         self._c = {
             "bold_cyan": BOLD_CYAN if color else "",
             "bold_red": BOLD_RED if color else "",
@@ -56,7 +57,7 @@ class ResultFormatter:
         num: int,
         title: str,
         artist: str,
-        url: str,
+        url: str | None,
         is_yt_video: bool,
         is_track: bool,
         **kwargs,
@@ -96,12 +97,12 @@ class ResultFormatter:
         else:
             year = kwargs.get("year", "N/A")
             lines.extend([f"{tree} {w + artist}", f"{tree} {w + year}"])
-
-        lines.append(f"{corner} {c['bold_red']}{url}")
+        if url:
+            lines.append(f"{corner} {c['bold_red']}{url}")
         lines.append(div)
 
         return "\n".join(lines)
 
-    def fmt_error(self, message: str) -> str:
+    def fmt_error(self, error: str) -> str:
         """Format error message."""
-        return styled(f"\n{message}\n", BOLD_RED)
+        return f"\n{BOLD_RED}{self.error_prefix}{RESET}{error}\n"

@@ -1,7 +1,7 @@
 from typing import Any
 
-from ..colors import success
-from . import CONFIG_FILE, echo, error, load_config, save_config, set_colors, sys
+from ..colors import error, set_colors, success
+from . import CONFIG_FILE, echo, load_config, sys, update_config
 
 PARAM_KEY = "parameters"
 
@@ -40,7 +40,7 @@ def set_parameters(
     set_colors(color)
 
     try:
-        config = load_config(color)
+        config = load_config(color, encoding)
 
         config[PARAM_KEY] = {
             "codec": codec,
@@ -54,7 +54,7 @@ def set_parameters(
             "cookies": cookies,
         }
 
-        if not save_config(config, encoding):
+        if not update_config(config, encoding):
             raise PermissionError()
 
         if not quiet:

@@ -8,7 +8,7 @@ from ..colors import (
     set_colors,
     styled,
 )
-from . import CONFIG_FILE, Path, echo, load_config, save_config, sys
+from . import CONFIG_FILE, Path, echo, load_config, sys, update_config
 
 PATH_KEY = "path"
 
@@ -45,7 +45,7 @@ def set_path(
         config = load_config(color, encoding)
         config[PATH_KEY] = input_path
 
-        if not save_config(config, encoding):
+        if not update_config(config, encoding):
             raise PermissionError()
 
         return styled("Configuration saved successfully", BOLD_GREEN)
