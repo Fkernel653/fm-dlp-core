@@ -45,24 +45,39 @@ class Search:
             color, self.error_prefix, self.formatter
         )
 
-    def search(self) -> Generator[str, None, None]:
+    def search(self) -> Generator[str, None, None] | None:
         """Perform search using appropriate provider."""
         if self.yt_video:
-            yield from self.yt_provider.search(
-                self.query,
-                self.limit,
-                self.is_track,
-                self.raw,
-                self.only_url,
-            )
+            try:
+                yield from self.yt_provider.search(
+                    self.query,
+                    self.limit,
+                    self.is_track,
+                    self.raw,
+                    self.only_url,
+                )
+            except Exception:
+                return
         else:
-            yield from self.ytm_provider.search(
-                self.query,
-                self.limit,
-                self.is_track,
-                self.raw,
-                self.only_url,
-            )
+            from requests.exceptions import ReadTimeout
+            from urllib3.exceptions import ReadTimeoutError
+
+            try:
+                yield from self.ytm_provider.search(
+                    self.query,
+                    self.limit,
+                    self.is_track,
+                    self.raw,
+                    self.only_url,
+                )
+            except (
+                ReadTimeoutError,
+                ReadTimeout,
+                TimeoutError,
+            ):
+                yield self.formatter.fmt_error("Connection timeout")
+            except Exception as e:
+                yield self.formatter.fmt_error(str(e))
 
 
 def search(
@@ -73,7 +88,9 @@ def search(
     raw: bool,
     only_url: bool,
     color: bool,
-) -> Generator[str, None, None]:
+) -> Generator[str, None, None] | str:
     """Search YouTube or YouTube Music."""
-    s = Search(query, limit, yt_video, album, raw, only_url, color)
-    return s.search()
+    result = Search(query, limit, yt_video, album, raw, only_url, color).search()
+    if result is not None:
+        return result
+    return ""

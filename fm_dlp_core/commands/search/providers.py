@@ -48,36 +48,29 @@ class BaseProvider(ABC):
             raw: Return raw data if True
             only_url: Return only URLs if True
         """
-        try:
-            results = self._extract_results(query, limit, is_track)
+        results = self._extract_results(query, limit, is_track)
 
-            if not results:
-                yield self._get_empty_message(query, is_track)
-                return
-
-            if raw:
-                for entry in islice(results, limit):
-                    yield str(entry) + "\n"
-                return
-
-            for num, entry in enumerate(islice(results, limit), 1):
-                url = self._extract_url(entry, is_track)
-
-                if not url:
-                    continue
-
-                if only_url:
-                    yield url
-                else:
-                    formatted = self._fmt_entry(entry, num, is_track)
-                    if formatted:
-                        yield formatted
-
-        except KeyboardInterrupt:
+        if not results:
+            yield self._get_empty_message(query, is_track)
             return
-        except Exception as e:
-            yield self.formatter.fmt_error(str(e))  # type: ignore
+
+        if raw:
+            for entry in islice(results, limit):
+                yield str(entry) + "\n"
             return
+
+        for num, entry in enumerate(islice(results, limit), 1):
+            url = self._extract_url(entry, is_track)
+
+            if not url:
+                continue
+
+            if only_url:
+                yield url
+            else:
+                formatted = self._fmt_entry(entry, num, is_track)
+                if formatted:
+                    yield formatted
 
 
 class YouTubeProvider(BaseProvider):
@@ -106,11 +99,11 @@ class YouTubeProvider(BaseProvider):
     def _extract_results(self, query: str, limit: int, is_track: bool) -> list:
         from yt_dlp import YoutubeDL
 
-        with YoutubeDL(self._ytdl_opts()) as ydl:
+        with YoutubeDL(self._ytdl_opts()) as ydl:  # type: ignore
             info = ydl.extract_info(
                 self._build_search_query(query, limit, is_track), download=False
             )
-            return info.get("entries", [])
+            return info.get("entries", [])  # type: ignore
 
     def _extract_url(self, entry: dict[str, Any], is_track: bool) -> str | None:
         if v_id := entry.get("id"):

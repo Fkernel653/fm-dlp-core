@@ -6,6 +6,21 @@ from . import CONFIG_FILE, echo, load_config, sys, update_config
 PARAM_KEY = "parameters"
 
 
+def _if_quiet(
+    quiet: bool,
+    text: str,
+    error_result: bool | None = None,
+    success_result: bool | None = None,
+) -> None:
+    if not quiet:
+        if error_result:
+            echo(error(text), file=sys.stderr)
+        elif success_result:
+            echo(success(text))
+        else:
+            echo(text)
+
+
 def set_parameters(
     codec: str,
     kbps: int,
@@ -57,20 +72,18 @@ def set_parameters(
         if not update_config(config, encoding):
             raise PermissionError()
 
-        if not quiet:
-            echo(success("Parameters have been successfully saved"))
+        _if_quiet(quiet, "Parameters have been successfully saved", success_result=True)
         return True
 
     except PermissionError:
-        if not quiet:
-            echo(
-                error(f"Permission denied! Cannot write to {CONFIG_FILE}"),
-                file=sys.stderr,
-            )
+        _if_quiet(
+            quiet,
+            f"Permission denied! Cannot write to {CONFIG_FILE}",
+            error_result=True,
+        )
         return False
     except OSError as e:
-        if not quiet:
-            echo(error(f"Error saving configuration: {e}"), file=sys.stderr)
+        _if_quiet(quiet, f"Error saving configuration: {e}", error_result=True)
         return False
 
 

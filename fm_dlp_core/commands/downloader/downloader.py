@@ -150,7 +150,7 @@ class Download:
             color=self.color,
         ).build()
 
-        with YoutubeDL(options) as ydl:
+        with YoutubeDL(options) as ydl:  # type: ignore
             ydl.download([url])
 
 
@@ -191,4 +191,4 @@ async def run_downloader(
         try:
             await dl.download_all()
         except Exception:
-            return
+            ...

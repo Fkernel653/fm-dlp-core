@@ -1,6 +1,6 @@
 """fm-dlp-core — Main core by fm-dlp"""
 
-from .commands.downloader import Download, run_downloader
+from .commands.downloader.downloader import Download, run_downloader
 from .commands.search import Search, search
 from .utils import (
     ALL_CODECS,
