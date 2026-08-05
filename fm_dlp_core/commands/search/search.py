@@ -45,7 +45,7 @@ class Search:
             color, self.error_prefix, self.formatter
         )
 
-    def search(self) -> Generator[str, None, None] | None:
+    def search(self) -> Generator[str, None, None] | str:
         """Perform search using appropriate provider."""
         if self.yt_video:
             try:
@@ -57,7 +57,7 @@ class Search:
                     self.only_url,
                 )
             except Exception:
-                return
+                return ""
         else:
             from requests.exceptions import ReadTimeout
             from urllib3.exceptions import ReadTimeoutError
@@ -90,7 +90,5 @@ def search(
     color: bool,
 ) -> Generator[str, None, None] | str:
     """Search YouTube or YouTube Music."""
-    result = Search(query, limit, yt_video, album, raw, only_url, color).search()
-    if result is not None:
-        return result
-    return ""
+    s = Search(query, limit, yt_video, album, raw, only_url, color)
+    return s.search()
