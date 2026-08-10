@@ -20,8 +20,8 @@ Package Structure:
     commands/
         downloader/   - Async download engine with format conversion
         search/       - YouTube and YouTube Music search providers
-        config/       - Configuration management for paths and parameters
     utils/            - Shared utilities (colors, formatting, constants)
+        config/       - Configuration management for paths and parameters
 
 Exported Symbols:
     Download, run_downloader   - Async download functionality
