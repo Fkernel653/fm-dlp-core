@@ -9,7 +9,19 @@ from .formatters import ResultFormatter
 
 
 class BaseProvider(ABC):
-    """Abstract base class for search providers."""
+    """
+    Abstract base class for search providers (YouTube and YouTube Music).
+
+    Provides a generic search workflow with template methods that concrete
+    providers must implement:
+    1. Search extraction via `_extract_results`
+    2. Entry formatting via `_fmt_entry`
+    3. URL extraction via `_extract_url`
+    4. Empty result handling via `_get_empty_message`
+
+    The `search` method orchestrates the common flow: fetch results, filter
+    invalid entries, and yield formatted output or raw data based on flags.
+    """
 
     def __init__(self, color: bool, error_prefix: str, formatter=None):
         self.formatter = formatter or ResultFormatter(color, error_prefix)
@@ -39,14 +51,28 @@ class BaseProvider(ABC):
         only_url: bool,
     ) -> Generator[str, None, None]:
         """
-        Generic search method that handles common logic.
+        Generic search method that handles common logic across providers.
+
+        Orchestrates the complete search workflow:
+        1. Calls `_extract_results` to fetch entries from the provider
+        2. If no results → yields an empty message and returns
+        3. If `raw` is True → yields string representations of entries
+        4. Otherwise, iterates through entries up to `limit`:
+            - Extracts URL via `_extract_url`
+            - Skips entries without a URL
+            - If `only_url` → yields the URL directly
+            - Otherwise → formats the entry via `_fmt_entry`
+        5. Stops early if no more results
 
         Args:
-            query: Search query string
-            limit: Maximum number of results
-            is_track: True for tracks/videos, False for albums/playlists
-            raw: Return raw data if True
-            only_url: Return only URLs if True
+            query (str): Search query string.
+            limit (int): Maximum number of results to return.
+            is_track (bool): True for tracks/videos, False for albums/playlists.
+            raw (bool): If True, yield raw dictionary representations.
+            only_url (bool): If True, yield only URLs without formatting.
+
+        Yields:
+            str: Formatted results, URLs, raw data, or empty messages.
         """
         results = self._extract_results(query, limit, is_track)
 
@@ -74,7 +100,14 @@ class BaseProvider(ABC):
 
 
 class YouTubeProvider(BaseProvider):
-    """Search provider for YouTube videos and playlists."""
+    """
+    Search provider for YouTube videos and playlists using yt-dlp.
+
+    Uses yt-dlp's `extract_flat` mode to perform efficient searches without
+    downloading any content. Supports searching for videos (`is_track=True`)
+    and playlists (`is_track=False`). Results include standard YouTube
+    metadata: title, channel, view count, duration, and video ID.
+    """
 
     @staticmethod
     def _ytdl_opts() -> dict[str, Any]:
@@ -127,7 +160,14 @@ class YouTubeProvider(BaseProvider):
 
 
 class YouTubeMusicProvider(BaseProvider):
-    """Search provider for YouTube Music tracks and albums."""
+    """
+    Search provider for YouTube Music tracks and albums using ytmusicapi.
+
+    Uses the ytmusicapi library to search YouTube Music's catalog:
+    - Tracks (songs) include: title, artist(s), album, view count, duration
+    - Albums include: title, artist(s), year, playlist ID
+    Both result types include a URL to the content on music.youtube.com.
+    """
 
     def _extract_results(self, query: str, limit: int, is_track: bool) -> list:
         from ytmusicapi import YTMusic

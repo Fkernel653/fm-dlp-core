@@ -1,5 +1,9 @@
 """Persistent download path storage using JSON config file."""
 
+import sys
+from pathlib import Path
+
+from ...utils import echo
 from ..colors import (
     BOLD_GREEN,
     error,
@@ -8,7 +12,7 @@ from ..colors import (
     set_colors,
     styled,
 )
-from . import CONFIG_FILE, Path, echo, load_config, sys, update_config
+from . import CONFIG_FILE, load_config, update_config
 
 PATH_KEY = "path"
 
@@ -18,21 +22,31 @@ def set_path(
     color: bool,
     encoding: str = "utf-8",
 ) -> str:
-    """Set and save the download directory path.
+    """
+    Set and save the download directory path to persistent configuration.
 
-    Validates the path, creates parent directories if needed, and saves
-    the configuration. Exits with error if path is invalid.
+    Validates the provided path by:
+    1. Resolving it to an absolute path (expanding ~ and resolving symlinks)
+    2. Checking that it exists and is a directory
+    3. Creating parent directories if they don't exist
+
+    If validation passes, saves the path to the configuration file under the
+    `path` key. If validation fails, exits with an error message.
 
     Args:
-        path: Directory path for downloads. Can be absolute or relative.
-        color: Colored output in success/error messages.
-        encoding: File Encoding.
+        path (str): Directory path for downloads. Can be absolute or relative,
+                    and may include ~ for home directory expansion.
+        color (bool): Enable colored output in success/error messages.
+        encoding (str, optional): File encoding for configuration file.
+                                  Defaults to "utf-8".
 
     Returns:
-        Success message with the configured path and config file location.
+        str: Success message indicating the path was saved, including the
+             configured path and config file location.
 
     Raises:
-        SystemExit: If path is invalid or permission denied.
+        SystemExit: If the path doesn't exist, is not a directory, or if
+                    permission is denied when writing to the config file.
     """
     set_colors(color)
     try:
@@ -60,20 +74,27 @@ def get_path(
     color: bool,
     encoding: str = "utf-8",
 ) -> str:
-    """Get the configured download directory path.
+    """
+    Get the configured download directory path from persistent storage.
 
-    Returns the saved path from config or defaults to user's home directory
-    if no configuration exists. Exits with error if saved path is invalid.
+    Returns the saved path from the configuration file or defaults to the
+    user's home directory if no configuration exists. If a saved path exists
+    but is invalid (doesn't exist or is not a directory), exits with an error.
+
+    This function is typically called when the user hasn't explicitly specified
+    a download path via command-line arguments, allowing the saved preference
+    to be used automatically.
 
     Args:
-        color: Colored output in error messages.
-        encoding: File Encoding.
+        color (bool): Enable colored output in info and error messages.
+        encoding (str, optional): File encoding for configuration file.
+                                  Defaults to "utf-8".
 
     Returns:
-        String containing the download directory path.
+        str: The resolved download directory path as an absolute string.
 
     Raises:
-        SystemExit: If saved path doesn't exist or is not a directory.
+        SystemExit: If the saved path doesn't exist or is not a directory.
     """
     if not CONFIG_FILE.exists():
         echo(info("Home directory is used!"))

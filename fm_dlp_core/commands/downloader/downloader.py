@@ -80,7 +80,18 @@ class Download:
         }
 
     def _get_executor(self):
-        """Choose executor based on task type."""
+        """
+        Select the appropriate executor type based on the download task.
+
+        Returns a ProcessPoolExecutor for video downloads or container formats
+        (which benefit from CPU parallelism for transcoding), and a ThreadPoolExecutor
+        for audio downloads (which are typically I/O-bound and work better with
+        threading). The number of workers is determined by the `jobs` parameter.
+
+        Returns:
+            ProcessPoolExecutor | ThreadPoolExecutor: An executor instance suitable
+                for the current download task type.
+        """
         if self.only_video or self.codec in VIDEO_CONTAINERS:
             return ProcessPoolExecutor(max_workers=self.jobs)
         else:
@@ -121,7 +132,22 @@ class Download:
                 echo(result)
 
     async def _download_url(self, url: str) -> str | None:
-        """Download a single URL and return status message."""
+        """
+        Download a single URL asynchronously and return a status message.
+
+        This method handles the complete download process for a single URL,
+        including:
+        - Disabling metadata embedding for WAV format (not supported)
+        - Logging progress information if not in quiet mode
+        - Offloading the synchronous yt-dlp download to a thread/process pool
+
+        Args:
+            url (str): The YouTube URL to download.
+
+        Returns:
+            str | None: A formatted success message if not in quiet mode,
+                otherwise None. Returns None if the download fails or is quiet.
+        """
         if self.codec == "wav" and self.metadata:
             self.metadata = False
             if not self.quiet:

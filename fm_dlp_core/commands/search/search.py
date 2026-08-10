@@ -6,7 +6,29 @@ from .providers import Generator, YouTubeMusicProvider, YouTubeProvider
 
 
 class Search:
-    """Handles searching across YouTube and YouTube Music."""
+    """
+    Handles searching across YouTube and YouTube Music with unified interface.
+
+    This class acts as a facade that delegates to the appropriate provider
+    (YouTubeProvider or YouTubeMusicProvider) based on the `yt_video` flag.
+    It also handles error handling, color configuration, and result formatting.
+
+    Features:
+    - Search for videos, tracks, albums, or playlists
+    - Support for raw output (Python dicts) or formatted strings
+    - URL-only output for piping to downloaders
+    - Graceful error handling with timeout detection
+    - Color-coded output for better readability
+
+    Args:
+        query (str): The search query string.
+        limit (int): Maximum number of results to return.
+        yt_video (bool): If True, search YouTube videos; if False, search YouTube Music.
+        album (bool): If True, search for albums/playlists; if False, search for tracks.
+        raw (bool): If True, output raw Python dictionaries instead of formatted strings.
+        only_url (bool): If True, output only URLs without any formatting.
+        color (bool): If True, enable ANSI color codes in output.
+    """
 
     def __init__(
         self,
@@ -46,7 +68,22 @@ class Search:
         )
 
     def search(self) -> Generator[str, None, None] | str:
-        """Perform search using appropriate provider."""
+        """
+        Perform search using the appropriate provider based on initialization flags.
+
+        Delegates to:
+        - YouTubeProvider if `yt_video` is True (searches YouTube videos/playlists)
+        - YouTubeMusicProvider if `yt_video` is False (searches YouTube Music tracks/albums)
+
+        Handles provider-specific exceptions:
+        - For YouTube Music: catches timeout errors (ReadTimeout, ReadTimeoutError, TimeoutError)
+          and returns a formatted timeout message
+        - For YouTube: catches all exceptions and returns an empty string (silent failure)
+
+        Returns:
+            Generator[str, None, None] | str: A generator yielding search results,
+                or an empty string if an error occurs with YouTube provider.
+        """
         if self.yt_video:
             try:
                 yield from self.yt_provider.search(
@@ -89,6 +126,25 @@ def search(
     only_url: bool,
     color: bool,
 ) -> Generator[str, None, None] | str:
-    """Search YouTube or YouTube Music."""
+    """
+    Convenience function to search YouTube or YouTube Music.
+
+    Creates a Search instance with the given parameters and executes the search.
+    This is a thin wrapper around the Search class, providing a simpler
+    functional interface for callers who don't need to manage the Search object.
+
+    Args:
+        query (str): The search query string.
+        limit (int): Maximum number of results to return.
+        yt_video (bool): If True, search YouTube videos; if False, search YouTube Music.
+        album (bool): If True, search for albums/playlists; if False, search for tracks.
+        raw (bool): If True, output raw Python dictionaries instead of formatted strings.
+        only_url (bool): If True, output only URLs without any formatting.
+        color (bool): If True, enable ANSI color codes in output.
+
+    Returns:
+        Generator[str, None, None] | str: A generator yielding search results,
+            or an empty string if an error occurs.
+    """
     s = Search(query, limit, yt_video, album, raw, only_url, color)
     return s.search()

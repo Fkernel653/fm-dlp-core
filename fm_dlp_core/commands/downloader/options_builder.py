@@ -36,7 +36,19 @@ class OptionsBuilder:
         self.color = color
 
     def _parse_quality(self) -> str:
-        """Parse quality string into yt-dlp format filter."""
+        """
+        Parse the quality string into a yt-dlp format filter expression.
+
+        Supports the following formats:
+        - "best" → returns "bestvideo" (highest available video quality)
+        - "worst" → returns "worstvideo" (lowest available video quality)
+        - Numeric height (e.g., "1080") → selects best video with height ≤ that value
+        - Height with "p" suffix (e.g., "1080p") → same as numeric (strips "p")
+        - Any other string → returned as-is (treated as custom format filter)
+
+        Returns:
+            str: A format filter string compatible with yt-dlp's --format option.
+        """
         if self.quality == "best":
             return "bestvideo"
         if self.quality == "worst":
@@ -53,7 +65,20 @@ class OptionsBuilder:
         return self.quality
 
     def build(self) -> dict[str, Any]:
-        """Build yt-dlp options dictionary."""
+        """
+        Build a complete yt-dlp options dictionary for the download.
+
+        Constructs the full set of options for yt-dlp by:
+        1. Setting base options (output template, concurrent downloads, retries)
+        2. Configuring color output based on the `color` flag
+        3. Adding cookie handling (from file or browser) if provided
+        4. Delegating to specialized builders for video-only or audio download
+           configurations with appropriate codec conversions and post-processors
+
+        Returns:
+            dict[str, Any]: A complete yt-dlp options dictionary ready to be passed
+                to the YoutubeDL constructor.
+        """
         base_opts = {
             "quiet": self.quiet,
             "no_warnings": self.quiet,

@@ -1,4 +1,4 @@
-# fm-dlp-core — Main core by fm-dlp
+# fm-dlp-core — Core Library for YouTube & 1000+ Sites
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=fff&style=for-the-badge)](https://python.org)
 [![PyPI](https://img.shields.io/pypi/v/fm-dlp-core?style=for-the-badge&logo=pypi&logoColor=fff&label=PyPI&color=007ec6)](https://pypi.org/project/fm-dlp-core)
@@ -6,583 +6,369 @@
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-9cf?style=for-the-badge)]()
 [![Ruff](https://img.shields.io/badge/Code%20Style-Ruff-ff69b4?logo=ruff&logoColor=fff&style=for-the-badge)](https://docs.astral.sh/ruff)
 
-Core containing utilities for searching from Youtube/YTMusic and downloading audio/video from [1000+ sites](https://github.com/yt-dlp/yt-dlp/supportedsites.md)
+**fm-dlp-core** is a powerful Python library for searching and downloading content from YouTube, YouTube Music, and over 1000+ supported sites. Built on top of yt-dlp, it provides a clean, async-first API with rich features including concurrent downloads, metadata embedding, and flexible output formatting.
 
 ---
 
-## 📑 Table of Contents
-- [🚀 Quick Start](#-quick-start)
-- [⚙️ Requirements](#️-requirements)
-- [📚 API Reference](#-api-reference)
-  - [🎵 Downloader](#-downloader)
-  - [🔍 Search](#-search)
-  - [⚙️ Configuration](#️-configuration)
-  - [🖥️ Output Formatting](#️-output-formatting)
-  - [📦 Internal Modules](#-internal-modules)
-    - [Providers](#providers)
-    - [Formatters](#formatters)
-    - [Config](#config)
-    - [Options Builder](#options-builder)
-    - [URL Parser](#url-parser)
-- [💡 Examples](#-examples)
-- [📊 Search Output Examples](#-search-output-examples)
-- [📄 License & Acknowledgments](#-license--acknowledgments)
+## ✨ Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 🎵 **Audio Extraction** | Extract audio in 8 formats: MP3, AAC, FLAC, M4A, Opus, Vorbis, WAV, ALAC |
+| 🎬 **Video Download** | Download videos in MP4, MKV, WebM, MOV, AVI, FLV with quality selection |
+| 🔍 **Search** | Search YouTube videos and YouTube Music tracks/albums with formatted output |
+| ⚡ **Concurrent Downloads** | Download multiple files in parallel with configurable job limits |
+| 🏷️ **Metadata Embedding** | Automatically embed tags and thumbnails into audio files |
+| 🔐 **Authentication** | Support for cookies (file or browser) to access restricted content |
+| 💾 **Persistent Config** | Save and load download preferences across sessions |
+| 🎨 **Colored Output** | Beautiful terminal output with ANSI colors (toggleable) |
+| 🔌 **Extensible** | Create custom search providers for any platform |
+
+---
+
+## 📋 Table of Contents
+
+- [Quick Start](#-quick-start)
+- [Installation](#-installation)
+- [Requirements](#-requirements)
+- [Core Concepts](#-core-concepts)
+- [Downloading Content](#-downloading-content)
+- [Searching Content](#-searching-content)
+- [Configuration](#-configuration)
+- [Advanced Topics](#-advanced-topics)
+- [API Reference](#-api-reference)
+- [Examples](#-examples)
+- [License](#-license)
 
 ---
 
 ## 🚀 Quick Start
+
+```python
+import asyncio
+from fm_dlp_core import search, run_downloader
+
+# 1. Search for a track
+for result in search("Sewerslvt", limit=3, yt_video=False, album=False):
+    print(result)
+
+# 2. Download a track
+asyncio.run(
+    run_downloader(
+        url="https://music.youtube.com/watch?v=y55fzyXZDSE",
+        codec="mp3",
+        kbps=320,
+        path="./music",
+        metadata=True,
+        color=True,
+    )
+)
+```
+
+---
+
+## 📦 Installation
+
 ```bash
-pip install fm-dlp-core                    # Python 3.10+ & FFmpeg required
+pip install fm-dlp-core
+```
+
+For development:
+```bash
+git clone https://github.com/Fkernel653/fm-dlp-core
+cd fm-dlp-core
+pip install -e .
 ```
 
 ---
 
 ## ⚙️ Requirements
-- **Python 3.10+** - Asyncio support required
-- **FFmpeg** - Required for audio/video processing. Install via:
-  - **macOS:** `brew install ffmpeg`
-  - **Linux:** `sudo apt install ffmpeg` (Debian) or `sudo dnf install ffmpeg` (Fedora)
-  - **Windows:** Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH
+
+### Python Version
+- **Python 3.10+** — Required for asyncio and type hint features
+
+### FFmpeg (Required)
+FFmpeg is essential for audio/video processing, conversion, and metadata embedding.
+
+| Platform | Installation Command |
+|----------|---------------------|
+| **macOS** | `brew install ffmpeg` |
+| **Debian/Ubuntu** | `sudo apt install ffmpeg` |
+| **Fedora** | `sudo dnf install ffmpeg` |
+| **Windows** | Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH |
 
 ---
 
-## 📚 API Reference
+## 🧠 Core Concepts
 
-### 🎵 Downloader
+### Async-First Design
+All download operations are asynchronous, allowing you to run multiple downloads concurrently without blocking your application.
+
+### Configuration Persistence
+Settings like codec, bitrate, quality, and download path can be saved to a JSON file and reused across sessions.
+
+### Provider Pattern
+Search functionality is built on a provider pattern, making it easy to add support for new platforms by subclassing `BaseProvider`.
+
+---
+
+## 🎵 Downloading Content
+
+### Basic Usage
 
 ```python
 import asyncio
-from fm_dlp_core.commands.downloader import Download, run_downloader
+from fm_dlp_core import run_downloader
 
-# Convenience function
-async def main():
-    await run_downloader(
-        url="https://www.youtube.com/watch?v=example",
+asyncio.run(
+    run_downloader(
+        url="https://youtube.com/watch?v=VIDEO_ID",
         codec="mp3",
         kbps=192,
-        quality="best",
-        jobs=4,
-        quiet=False,
-        metadata=True,
-        keep=False,
-        save=False,
-        use_config=False,
         path="./downloads",
-        only_video=False,
-        cookies=None,
-        color=True,
     )
+)
+```
 
-# Context manager (advanced)
+### Advanced Usage with Context Manager
+
+```python
+from fm_dlp_core import Download
+
+async def download_video():
+    async with Download(
+        url="https://youtube.com/watch?v=VIDEO_ID",
+        codec="mp4",
+        quality="1080p",
+        jobs=4,
+        path="./videos",
+        metadata=True,
+        only_video=True,
+        color=True,
+    ) as downloader:
+        await downloader.download_all()
+```
+
+### Batch Downloads
+
+```python
+# Multiple URLs (comma or space separated)
 async with Download(
-    url="https://www.youtube.com/watch?v=example",
-    codec="mp3",
-    kbps=320,
-    quality="1080p",
-    jobs=2,
-    quiet=True,
-    metadata=True,
-    keep=True,
-    path="./downloads",
-    only_video=False,
-    cookies="chrome",
-    color=True,
+    url="url1,url2,url3",  # or "url1 url2 url3"
+    codec="flac",
+    kbps=0,  # Lossless
+    jobs=3,
+) as downloader:
+    await downloader.download_all()
+
+# URLs from a text file (one per line)
+async with Download(
+    url="urls.txt",
+    codec="m4a",
+    kbps=256,
 ) as downloader:
     await downloader.download_all()
 ```
 
-#### Parameters
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `url` | `str` | URL(s) to download (comma/space separated or path to file) |
-| `codec` | `str` | Audio codec or video container (`mp3`, `aac`, `flac`, `mp4`, `mkv`) |
-| `kbps` | `int` | Audio bitrate in kbps (128, 192, 320) |
-| `quality` | `str` | Video quality (`best`, `worst`, `1080p`, `720p`) |
-| `jobs` | `int` | Maximum concurrent downloads |
-| `quiet` | `bool` | Suppress output messages |
-| `metadata` | `bool` | Embed metadata and thumbnail |
-| `keep` | `bool` | Keep original file after conversion |
-| `save` | `bool` | Save parameters to config file |
-| `use_config` | `bool` | Load parameters from config file |
-| `path` | `str` | Download directory path |
-| `only_video` | `bool` | Download video only (no audio extraction) |
-| `cookies` | `str\|None` | Path to cookies file or browser name |
-| `color` | `bool` | Enable colored output |
-| `encoding` | `str` | File encoding (default: utf-8) |
+### Supported Codecs
+
+| Type | Formats |
+|------|---------|
+| **Audio** | `mp3`, `aac`, `flac`, `m4a`, `opus`, `vorbis`, `wav`, `alac` |
+| **Video** | `mp4`, `mov`, `mkv`, `webm`, `avi`, `flv` |
+
+### Download Parameters
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `url` | `str` | URL(s) to download (comma/space separated or path to file) | **Required** |
+| `codec` | `str` | Output format (see Supported Codecs) | `"m4a"` (macOS) / `"opus"` (others) |
+| `kbps` | `int` | Audio bitrate in kbps | `192` |
+| `quality` | `str` | Video quality (`best`, `worst`, `1080p`, `720p`, etc.) | `"best"` |
+| `jobs` | `int` | Number of concurrent downloads | `4` |
+| `quiet` | `bool` | Suppress output messages | `False` |
+| `metadata` | `bool` | Embed metadata and thumbnail | `True` |
+| `keep` | `bool` | Keep original downloaded file | `False` |
+| `save` | `bool` | Save parameters to config | `False` |
+| `use_config` | `bool` | Load parameters from config | `False` |
+| `path` | `str` | Download directory | Current directory |
+| `only_video` | `bool` | Download video only (skip audio extraction) | `False` |
+| `cookies` | `str \| None` | Cookies file path or browser name | `None` |
+| `color` | `bool` | Enable colored output | `True` |
 
 ---
 
-### 🔍 Search
+## 🔍 Searching Content
+
+### YouTube Music Search
+
+Search for tracks and albums on YouTube Music:
 
 ```python
-from fm_dlp_core.commands.search import search
+from fm_dlp_core import search
 
-# Search YouTube Music for tracks
-for result in search(query="Sewerslvt", limit=5, yt_video=False):
+# Search for tracks
+for result in search(
+    query="Sewerslvt",
+    limit=5,
+    yt_video=False,   # Use YouTube Music
+    album=False,      # Search for tracks
+    color=True,
+):
     print(result)
 
-# Search YouTube videos
-for result in search(query="Python tutorial", limit=3, yt_video=True):
+# Search for albums
+for result in search(
+    query="Draining Love Story",
+    limit=3,
+    yt_video=False,
+    album=True,       # Search for albums
+):
     print(result)
-
-# Get only URLs
-urls = list(search(query="breakcore", limit=10, only_url=True))
-
-# Raw data
-for data in search(query="Goreshit", limit=2, raw=True):
-    print(data)  # dict
 ```
 
-#### Parameters
+### YouTube Video Search
+
+Search for videos on YouTube:
+
+```python
+# Search YouTube videos
+for result in search(
+    query="Python tutorial",
+    limit=5,
+    yt_video=True,    # Use YouTube (videos)
+    album=False,
+):
+    print(result)
+```
+
+### Output Modes
+
+| Mode | Parameter | Description |
+|------|-----------|-------------|
+| **Formatted** | `raw=False, only_url=False` | Beautiful colored output with metadata |
+| **URL-Only** | `only_url=True` | Just the URLs (great for piping) |
+| **Raw Data** | `raw=True` | Python dictionaries with full metadata |
+
+```python
+# Get only URLs
+urls = list(search("breakcore", limit=10, only_url=True))
+
+# Get raw data
+for data in search("Goreshit", limit=2, raw=True):
+    print(data["title"], data["url"])
+
+# Chain search → download
+urls = list(search("chill beats", limit=5, only_url=True))
+if urls:
+    asyncio.run(run_downloader(url=" ".join(urls), codec="mp3", kbps=320))
+```
+
+### Search Parameters
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `query` | `str` | Search query string |
-| `limit` | `int` | Maximum number of results |
-| `yt_video` | `bool` | Search YouTube videos (False = YouTube Music) |
-| `album` | `bool` | Search for albums (False = tracks) |
+| `limit` | `int` | Maximum number of results (1-100) |
+| `yt_video` | `bool` | `True` = YouTube videos, `False` = YouTube Music |
+| `album` | `bool` | `True` = search albums, `False` = search tracks |
 | `raw` | `bool` | Output raw Python dicts |
 | `only_url` | `bool` | Output only URLs |
 | `color` | `bool` | Enable colored output |
 
 ---
 
-### ⚙️ Configuration
+## ⚙️ Configuration
+
+### Persistent Download Parameters
+
+Save your preferred settings to reuse them later:
 
 ```python
 from fm_dlp_core.utils.config.parametrs import set_parameters, get_parameters
-from fm_dlp_core.utils.config.path import set_path, get_path
-from fm_dlp_core.utils.config import load_config, update_config
 
 # Save parameters
-set_parameters(codec="mp3", kbps=256, quality="720p", jobs=4)
+set_parameters(
+    codec="mp3",
+    kbps=256,
+    quality="720p",
+    jobs=4,
+    quiet=False,
+    metadata=True,
+    keep=False,
+    only_video=False,
+    cookies="chrome",  # Use browser cookies
+    color=True,
+)
 
-# Load parameters
-params = get_parameters(color=True, encoding="utf-8")
-
-# Set download path
-set_path("./my_downloads", color=True, encoding="utf-8")
-
-# Load full config
-config = load_config(color=True, encoding="utf-8")
+# Load saved parameters
+params = get_parameters(color=True)
+print(params)  # {'codec': 'mp3', 'kbps': 256, ...}
 ```
 
-#### Configuration File Location
-| Platform | Location |
-|----------|----------|
+### Download Path
+
+Set and get the default download directory:
+
+```python
+from fm_dlp_core.utils.config.path import set_path, get_path
+
+# Set download path
+result = set_path("/my/download/folder", color=True)
+print(result)  # "Configuration saved successfully"
+
+# Get current path
+path = get_path(color=True)
+print(f"Downloads will be saved to: {path}")
+```
+
+### Configuration File Location
+
+| Platform | Path |
+|----------|------|
 | **Windows** | `%LOCALAPPDATA%\fm-dlp\config.json` |
 | **macOS** | `~/Library/Application Support/fm-dlp/config.json` |
 | **Linux** | `~/.config/fm-dlp/config.json` |
 
----
+### Configuration Structure
 
-### 🖥️ Output Formatting
-
-```python
-from fm_dlp_core.utils import echo
-from fm_dlp_core.utils.colors import success, error, info, hint, set_colors, styled, BOLD_CYAN
-
-# Enable/disable colors
-set_colors(True)
-
-# Formatted messages
-echo(success("Download completed!"))
-echo(error("Failed to download"))
-echo(info("Processing file..."))
-echo(hint("Use --help for more options"))
-
-# Custom styled text
-echo(styled("Custom message", BOLD_CYAN))
+```json
+{
+    "parameters": {
+        "codec": "mp3",
+        "kbps": 256,
+        "quality": "best",
+        "jobs": 4,
+        "quiet": false,
+        "metadata": true,
+        "keep": false,
+        "only_video": false,
+        "cookies": null
+    },
+    "path": "/home/user/Music"
+}
 ```
 
 ---
 
-### 📦 Internal Modules
+## 🔧 Advanced Topics
 
-#### Providers
+### Custom Search Providers
 
-Abstract base class for search providers with implementations for YouTube and YouTube Music.
-
-##### BaseProvider (Abstract Base Class)
-
-`BaseProvider` is an abstract base class that defines the interface for creating custom search providers. To implement your own provider, subclass `BaseProvider` and override the abstract methods.
-
-```python
-from abc import ABC, abstractmethod
-from fm_dlp_core.commands.search.providers import BaseProvider
-from fm_dlp_core.commands.search.formatters import ResultFormatter
-
-class MyCustomProvider(BaseProvider):
-    """Custom search provider for your favorite platform."""
-    
-    def _extract_results(self, query: str, limit: int, is_track: bool) -> list:
-        """Extract search results from your platform."""
-        # Implement your search logic here
-        # Return a list of entries (dicts)
-        return results
-    
-    def _extract_url(self, entry: dict, is_track: bool) -> str | None:
-        """Extract URL from a search entry."""
-        # Return the URL for this entry
-        return entry.get("url")
-    
-    def _fmt_entry(self, entry: dict, num: int, is_track: bool) -> str | None:
-        """Format a single search entry."""
-        # Use self.formatter to format the entry
-        return self.formatter.fmt_result(
-            num=num,
-            title=entry.get("title", "Unknown"),
-            artist=entry.get("artist", "Unknown"),
-            url=self._extract_url(entry, is_track),
-            is_yt_video=False,  # Set to True for video platforms
-            is_track=is_track,
-            # Add additional metadata as kwargs
-        )
-    
-    def _get_empty_message(self, query: str, is_track: bool) -> str:
-        """Get message when no results found."""
-        return f"No results found for '{query}'\n"
-```
-
-**BaseProvider Methods:**
-
-| Method | Description | Must Override |
-|--------|-------------|---------------|
-| `__init__(color, error_prefix, formatter=None)` | Initialize with color settings | ❌ |
-| `search(query, limit, is_track, raw, only_url) -> Generator[str]` | Generic search with common logic | ❌ (already implemented) |
-| `_extract_results(query, limit, is_track) -> list` | Extract search results from provider | ✅ |
-| `_extract_url(entry, is_track) -> str \| None` | Extract URL from search entry | ✅ |
-| `_fmt_entry(entry, num, is_track) -> str \| None` | Format a single search entry | ✅ |
-| `_get_empty_message(query, is_track) -> str` | Get message when no results found | ✅ |
-
-**Using Your Custom Provider:**
-
-```python
-# Create an instance of your custom provider
-provider = MyCustomProvider(color=True, error_prefix="Error: ")
-
-# Search using the provider
-for result in provider.search(
-    query="my search query",
-    limit=10,
-    is_track=True,       # True for tracks, False for albums/playlists
-    raw=False,           # Return formatted output
-    only_url=False,      # Return full details
-):
-    print(result)
-
-# Get only URLs
-urls = list(provider.search(query="query", limit=5, only_url=True))
-```
-
-##### Built-in Providers
-
-| Class | Description |
-|-------|-------------|
-| `YouTubeProvider` | Search YouTube videos and playlists using yt-dlp |
-| `YouTubeMusicProvider` | Search YouTube Music tracks and albums using ytmusicapi |
-
-```python
-from fm_dlp_core.commands.search.providers import YouTubeProvider, YouTubeMusicProvider
-
-# YouTube search
-yt = YouTubeProvider(color=True, error_prefix="Error: ")
-for result in yt.search(query="test", limit=5, is_track=True, raw=False, only_url=False):
-    print(result)
-
-# YouTube Music search
-ytm = YouTubeMusicProvider(color=True, error_prefix="Error: ")
-for result in ytm.search(query="test", limit=5, is_track=True, raw=False, only_url=False):
-    print(result)
-```
-
----
-
-#### Formatters
-
-Format search results with colors and metadata.
-
-```python
-from fm_dlp_core.commands.search.formatters import ResultFormatter
-
-formatter = ResultFormatter(color=True, error_prefix="Error: ")
-
-# Format metadata
-views = formatter.fmt_views(1234567)       # "1,234,567"
-duration = formatter.fmt_duration(125)     # "2:05"
-artist = formatter.extract_artist(item)    # Extract artist from YT Music response
-
-# Format result entry
-output = formatter.fmt_result(
-    num=1,
-    title="Song Title",
-    artist="Artist Name",
-    url="https://...",
-    is_yt_video=False,
-    is_track=True,
-    album="Album Name",
-    views="1,234",
-    duration="3:45"
-)
-```
-
-**Methods:**
-| Method | Description |
-|--------|-------------|
-| `fmt_views(v)` | Format view count with commas |
-| `fmt_duration(d)` | Convert seconds to MM:SS or HH:MM:SS |
-| `extract_artist(item)` | Extract artist from YT Music response |
-| `fmt_result(...)` | Format a search result with metadata |
-| `fmt_error(error)` | Format error message |
-
----
-
-#### Config
-
-Configuration container for download settings.
-
-```python
-from fm_dlp_core.commands.downloader.config import DownloadConfig
-
-config = DownloadConfig(
-    url="https://...",
-    codec="mp3",
-    kbps=192,
-    quality="best",
-    jobs=4,
-    quiet=False,
-    metadata=True,
-    keep=False,
-    save=False,
-    use_config=False,
-    path="./downloads",
-    only_video=False,
-    cookies=None,
-    color=True,
-    encoding="utf-8"
-)
-
-# Apply config (load from file if use_config=True)
-params = config.apply_config()
-
-# Save config (if save=True)
-config.save_config()
-```
-
-**Attributes:**
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `url` | `str` | URL(s) to download |
-| `codec` | `str` | Audio/video codec |
-| `kbps` | `int` | Audio bitrate |
-| `quality` | `str` | Video quality |
-| `jobs` | `int` | Concurrent downloads |
-| `quiet` | `bool` | Suppress output |
-| `metadata` | `bool` | Embed metadata |
-| `keep` | `bool` | Keep original file |
-| `save` | `bool` | Save to config |
-| `use_config` | `bool` | Load from config |
-| `path` | `str` | Download directory |
-| `only_video` | `bool` | Video-only mode |
-| `cookies` | `str\|None` | Cookies source |
-| `color` | `bool` | Colored output |
-| `encoding` | `str` | File encoding |
-
-**Methods:**
-- `apply_config() -> dict` - Apply saved config if requested
-- `save_config() -> bool` - Save current settings to config file
-
----
-
-#### Options Builder
-
-Build yt-dlp options dictionary for downloads.
-
-```python
-from fm_dlp_core.commands.downloader.options_builder import OptionsBuilder
-
-builder = OptionsBuilder(
-    codec="mp3",
-    kbps=192,
-    quality="best",
-    jobs=4,
-    quiet=False,
-    metadata=True,
-    keep=False,
-    only_video=False,
-    cookies=None,
-    path="./downloads",
-    color=True,
-)
-
-opts = builder.build()  # Returns yt-dlp options dict
-```
-
-**Methods:**
-| Method | Description |
-|--------|-------------|
-| `build() -> dict` | Build complete yt-dlp options dictionary |
-| `_parse_quality() -> str` | Parse quality string to yt-dlp filter |
-| `_add_cookies(opts)` | Add cookie configuration |
-| `_build_video_opts(opts)` | Build video-only options |
-| `_build_audio_opts(opts)` | Build audio options |
-| `_build_audio_only_opts(opts)` | Build audio-only options |
-| `_build_video_with_audio_opts(opts)` | Build video+audio options |
-
----
-
-#### URL Parser
-
-Parse URLs from string or file path.
-
-```python
-from fm_dlp_core.commands.downloader.url_parser import URLParser
-
-# Parse from string
-parser = URLParser("url1,url2,url3", quiet=False)
-urls = parser.parse()  # ['url1', 'url2', 'url3']
-
-# Parse from file (one URL per line)
-parser = URLParser("urls.txt", quiet=False)
-urls = parser.parse()
-
-# Parse with spaces
-parser = URLParser("url1 url2 url3", quiet=False)
-urls = parser.parse()
-```
-
-**Methods:**
-| Method | Description |
-|--------|-------------|
-| `parse() -> list[str]` | Parse URLs from string or file path |
-| `_parse_url_file(file_path) -> list[str]` | Read URLs from text file |
-
----
-
-### 📋 Supported Codecs
-
-#### Audio Codecs
-`mp3`, `aac`, `flac`, `m4a`, `opus`, `vorbis`, `wav`, `alac`
-
-#### Video Containers
-`mp4`, `mov`, `mkv`, `webm`, `avi`, `flv`
-
-```python
-from fm_dlp_core.utils import ALL_CODECS, AUDIO_CODECS, VIDEO_CONTAINERS
-```
-
----
-
-## 💡 Examples
-
-### Basic Download
-
-Example of downloading a track from YouTube Music:
-
-```python
-import asyncio
-from fm_dlp_core.commands.downloader import Download
-
-async def main():
-    async with Download(
-        url="https://music.youtube.com/watch?v=0KNxOBerr_8",
-        codec="opus",
-        kbps=256,
-        quality="best",
-        jobs=1,
-        quiet=False,
-        metadata=True,
-        keep=False,
-        save=False,
-        use_config=False,
-        path="./Music",
-        only_video=False,
-        cookies=None,
-        color=True,
-    ) as downloader:
-        await downloader.download_all()
-
-asyncio.run(main())
-```
-
-<details>
-<summary>📦 Result of execution</summary>
-
-```text
-Starting: https://music.youtube.com/watch?v=0KNxOBerr_8
-
-[youtube] Extracting URL: https://music.youtube.com/watch?v=0KNxOBerr_8
-[youtube] 0KNxOBerr_8: Downloading webpage
-[youtube] 0KNxOBerr_8: Downloading android vr player API JSON
-[info] 0KNxOBerr_8: Downloading 1 format(s): 251
-[info] Downloading video thumbnail 41 ...
-[info] Writing video thumbnail 41 to: /home/user/Music/Lexapro Delirium.webp
-[download] Destination: /home/user/Music/Lexapro Delirium.webm
-[download] 100% of    6.53MiB in 00:00:01 at 5.74MiB/s
-[ExtractAudio] Destination: /home/user/Music/Lexapro Delirium.opus
-Deleting original file /home/user/Music/Lexapro Delirium.webm (pass -k to keep)
-[Metadata] Adding metadata to "/home/user/Music/Lexapro Delirium.opus"
-[ThumbnailsConvertor] Converting thumbnail "/home/user/Music/Lexapro Delirium.webp" to png
-[EmbedThumbnail] mutagen: Adding thumbnail to "/home/user/Music/Lexapro Delirium.opus"
-
-Success: https://music.youtube.com/watch?v=0KNxOBerr_8
-```
-
-</details>
-
----
-
-### Download YouTube Video as MP4
-
-```python
-import asyncio
-from fm_dlp_core.commands.downloader import run_downloader
-
-asyncio.run(run_downloader(
-    url="https://www.youtube.com/watch?v=video_id",
-    codec="mp4",
-    quality="1080p",
-    path="./videos",
-    only_video=True,
-))
-```
-
-### Batch Download Audio
-
-```python
-async with Download(
-    url="id1,id2,id3",  # comma-separated
-    codec="flac",
-    kbps=0,  # Lossless
-    jobs=3,
-    metadata=True,
-    path="./music",
-) as downloader:
-    await downloader.download_all()
-```
-
-### Search and Download Automation
-
-```python
-urls = list(search(query="chill beats", limit=5, only_url=True))
-if urls:
-    async with Download(url=" ".join(urls), codec="mp3", kbps=320) as downloader:
-        await downloader.download_all()
-```
-
-### Create Custom Search Provider
+Create your own search provider by subclassing `BaseProvider`:
 
 ```python
 from fm_dlp_core.commands.search.providers import BaseProvider
 
 class SoundCloudProvider(BaseProvider):
     def _extract_results(self, query: str, limit: int, is_track: bool) -> list:
-        # Implement SoundCloud API search
-        # ...
+        # Implement your search logic
+        # Return list of entries (dicts)
         return results
-    
+
     def _extract_url(self, entry: dict, is_track: bool) -> str | None:
-        return f"https://soundcloud.com/{entry.get('permalink_url')}"
-    
+        return entry.get("permalink_url")
+
     def _fmt_entry(self, entry: dict, num: int, is_track: bool) -> str | None:
         return self.formatter.fmt_result(
             num=num,
@@ -592,87 +378,268 @@ class SoundCloudProvider(BaseProvider):
             is_yt_video=False,
             is_track=is_track,
         )
-    
-    def _get_empty_message(self, query: str, is_track: bool) -> str:
-        return f"No tracks found for '{query}'\n"
 
-# Use your custom provider
+    def _get_empty_message(self, query: str, is_track: bool) -> str:
+        return f"No results found for '{query}'\n"
+
+# Use your provider
 provider = SoundCloudProvider(color=True, error_prefix="Error: ")
 for result in provider.search(query="lo-fi", limit=5, is_track=True):
     print(result)
 ```
 
+### Building Custom yt-dlp Options
+
+For advanced use cases, you can build custom yt-dlp options:
+
+```python
+from fm_dlp_core.commands.downloader.options_builder import OptionsBuilder
+
+builder = OptionsBuilder(
+    codec="mp3",
+    kbps=320,
+    quality="best",
+    jobs=4,
+    quiet=False,
+    metadata=True,
+    keep=False,
+    only_video=False,
+    cookies="firefox",
+    path="./downloads",
+    color=True,
+)
+
+opts = builder.build()
+# Add custom options
+opts["extractor_args"] = {"youtube": {"skip": ["hls"]}}
+
+# Use with yt-dlp directly
+from yt_dlp import YoutubeDL
+with YoutubeDL(opts) as ydl:
+    ydl.download(["https://youtube.com/watch?v=..."])
+```
+
+### Cookie Authentication
+
+For private or age-restricted content:
+
+```python
+# Using browser cookies
+asyncio.run(
+    run_downloader(
+        url="https://youtube.com/watch?v=...",
+        codec="mp3",
+        cookies="chrome",  # or "firefox", "edge", "opera"
+        path="./downloads",
+    )
+)
+
+# Using cookies file
+asyncio.run(
+    run_downloader(
+        url="https://youtube.com/watch?v=...",
+        codec="mp3",
+        cookies="./cookies.txt",
+        path="./downloads",
+    )
+)
+```
+
 ---
 
-## 📊 Search Output Examples
+## 📚 API Reference
 
-Examples of formatting search results from different sources.
+### Core Package
 
-### 🎵 YTMusic (Track)
+| Module | Description |
+|--------|-------------|
+| `fm_dlp_core` | Main package with `Download`, `Search`, and utilities |
+| `fm_dlp_core.commands.downloader` | Download functionality with `Download` and `run_downloader` |
+| `fm_dlp_core.commands.search` | Search functionality with `Search` and `search` |
+| `fm_dlp_core.utils` | Shared utilities (colors, constants, config) |
+| `fm_dlp_core.utils.config` | Configuration management (paths, parameters) |
+| `fm_dlp_core.utils.colors` | Terminal color utilities |
 
+### Key Classes
+
+| Class | Module | Description |
+|-------|--------|-------------|
+| `Download` | `commands.downloader` | Async downloader with context manager |
+| `DownloadConfig` | `commands.downloader.config` | Configuration container |
+| `OptionsBuilder` | `commands.downloader.options_builder` | yt-dlp options builder |
+| `URLParser` | `commands.downloader.url_parser` | Parse URLs from string/file |
+| `Search` | `commands.search` | Main search handler |
+| `ResultFormatter` | `commands.search.formatters` | Format search results |
+| `BaseProvider` | `commands.search.providers` | Abstract provider base |
+| `YouTubeProvider` | `commands.search.providers` | YouTube video search |
+| `YouTubeMusicProvider` | `commands.search.providers` | YouTube Music search |
+
+### Key Functions
+
+| Function | Module | Description |
+|----------|--------|-------------|
+| `run_downloader` | `commands.downloader` | Async download entry point |
+| `search` | `commands.search` | Convenience search function |
+| `set_parameters` | `utils.config.parametrs` | Save download parameters |
+| `get_parameters` | `utils.config.parametrs` | Load download parameters |
+| `set_path` | `utils.config.path` | Set download directory |
+| `get_path` | `utils.config.path` | Get download directory |
+| `echo` | `utils` | Print with color support |
+| `success/error/info/hint` | `utils.colors` | Formatted colored messages |
+
+---
+
+## 💡 Examples
+
+### Example 1: Download a Music Playlist
+
+```python
+import asyncio
+from fm_dlp_core import search, run_downloader
+
+async def download_playlist(playlist_url: str):
+    await run_downloader(
+        url=playlist_url,
+        codec="flac",
+        kbps=0,  # Lossless
+        jobs=4,
+        metadata=True,
+        path="./music",
+        color=True,
+    )
+
+asyncio.run(download_playlist("https://music.youtube.com/playlist?list=..."))
+```
+
+### Example 2: Search and Download Top Tracks
+
+```python
+import asyncio
+from fm_dlp_core import search, run_downloader
+
+def get_top_tracks(artist: str, limit: int = 5) -> list[str]:
+    return list(search(artist, limit=limit, yt_video=False, only_url=True))
+
+async def download_artist(artist: str):
+    urls = get_top_tracks(artist, limit=3)
+    if urls:
+        await run_downloader(
+            url=" ".join(urls),
+            codec="mp3",
+            kbps=320,
+            metadata=True,
+            path=f"./music/{artist}",
+        )
+
+asyncio.run(download_artist("Porter Robinson"))
+```
+
+### Example 3: Custom Download with Progress Callback
+
+```python
+import asyncio
+from fm_dlp_core import Download
+
+class MyDownloader(Download):
+    def _sync_download(self, url: str):
+        # Override to add custom behavior
+        print(f"Downloading: {url}")
+        super()._sync_download(url)
+
+async def main():
+    async with MyDownloader(
+        url="https://youtube.com/watch?v=...",
+        codec="mp4",
+        quality="1080p",
+        path="./videos",
+    ) as downloader:
+        await downloader.download_all()
+```
+
+### Example 4: Working with Raw Search Data
+
+```python
+from fm_dlp_core import search
+
+# Get raw data for programmatic use
+for result in search(
+    query="Daft Punk",
+    limit=10,
+    yt_video=False,
+    album=False,
+    raw=True,  # Returns dicts
+):
+    print(f"Title: {result['title']}")
+    print(f"Artist: {result.get('artists', [{}])[0].get('name', 'Unknown')}")
+    print(f"Duration: {result.get('duration')}s")
+    print(f"URL: https://music.youtube.com/watch?v={result.get('videoId')}")
+    print("-" * 40)
+```
+
+### Example 5: Error Handling
+
+```python
+import asyncio
+from fm_dlp_core import run_downloader
+
+async def safe_download(url: str):
+    try:
+        await run_downloader(
+            url=url,
+            codec="mp3",
+            kbps=192,
+            path="./downloads",
+        )
+    except Exception as e:
+        print(f"Download failed for {url}: {e}")
+
+asyncio.run(safe_download("https://youtube.com/watch?v=invalid_id"))
+```
+
+---
+
+## 🖥️ Output Formatting
+
+### Search Results Format
+
+```
     1. Mr. Kill Myself
         ├─ Sewerslvt
         ├─ Draining Love Story
-        ├─ 13M │ 7:52
+        ├─ 13,456,789 │ 7:52
         └─ https://music.youtube.com/watch?v=y55fzyXZDSE
            ──────────────────────────────────────────────────
+```
 
-    N. Title
-        ├─ Artist
-        ├─ Album
-        ├─ Views │ Duration
-        └─ URL
-           ──────────────────────────────────────────────────
-
-### 💿 YTMusic (Album)
-
-    1. Draining Love Story
-        ├─ Sewerslvt
-        ├─ 2020
-        └─ https://music.youtube.com/playlist?list=OLAK5uy_lwWVcID2Sw8o6Jfa9vz8-a2hqEFffKb-g
-          ──────────────────────────────────────────────────
-          
-    N. Title
-        ├─ Artist
-        ├─ Year
-        └─ URL
-           ──────────────────────────────────────────────────
-
-### ▶️ YouTube (Video)
-
-    1. Sewerslvt - goodbye
-        ├─ Sewerslvt
-        ├─ 2,405,647 │ 17:01
-        └─ https://youtu.be/ABBpsy6rlVU
-           ──────────────────────────────────────────────────
-
-    N. Title
-        ├─ Artist
-        ├─ Views │ Duration
-        └─ URL
-           ──────────────────────────────────────────────────
-
----
-
-### 🧩 Formatting Legend
+### Format Elements
 
 | Element | Description |
 |---------|-------------|
-| **N.** | Sequential number of search result |
+| **N.** | Sequential result number |
 | **Title** | Track, album, or video title |
 | **Artist** | Artist or channel name |
-| `├─└─│` | Tree branch characters |
-| **Views │ Duration** | View count and length (MM:SS or HH:MM:SS) |
+| `├─└─│` | Tree structure for visual hierarchy |
+| **Views │ Duration** | View count and length |
 | **URL** | Direct link to content |
-| `───` | Visual separator line |
 
-> **Note:** All formatting is handled automatically by the `ResultFormatter` class. Colors can be enabled/disabled via the `color` parameter in search and download functions.
+### Colored Output Functions
+
+```python
+from fm_dlp_core.utils.colors import success, error, info, hint
+
+print(success("Download completed!"))
+print(error("Failed to process video"))
+print(info("Extracting metadata..."))
+print(hint("Try using a higher bitrate for better quality"))
+```
 
 ---
 
-## 📄 License & Acknowledgments
+## 📄 License
 
-GPLv3 License — Built with:
+This project is licensed under the **GPLv3 License** — see the [LICENSE](LICENSE) file for details.
+
+### Acknowledgments
 
 | Library | Purpose |
 |---------|---------|
@@ -680,6 +647,12 @@ GPLv3 License — Built with:
 | [ytmusicapi](https://github.com/sigma67/ytmusicapi) | YouTube Music search API |
 | [mutagen](https://github.com/quodlibet/mutagen) | Metadata tagging for audio files |
 
-**Author:** [Fkernel653](https://github.com/Fkernel653)
+---
 
-**Project:** [GitHub](https://github.com/Fkernel653/fm-dlp-core) • [PyPI](https://pypi.org/project/fm-dlp-core)
+**Author:** [Fkernel653](https://github.com/Fkernel653)  
+**Project:** [GitHub](https://github.com/Fkernel653/fm-dlp-core) • [PyPI](https://pypi.org/project/fm-dlp-core)  
+**Documentation:** [fm-dlp-core Docs](https://github.com/Fkernel653/fm-dlp-core#readme)
+
+---
+
+*If you encounter any issues, please [open an issue](https://github.com/Fkernel653/fm-dlp-core/issues) on GitHub.*

@@ -1,7 +1,9 @@
+import sys
 from typing import Any
 
+from ...utils import echo
 from ..colors import error, set_colors, success
-from . import CONFIG_FILE, echo, load_config, sys, update_config
+from . import CONFIG_FILE, load_config, update_config
 
 PARAM_KEY = "parameters"
 
@@ -34,23 +36,33 @@ def set_parameters(
     color: bool,
     encoding: str = "utf-8",
 ) -> bool:
-    """Save download parameters to config file without overwriting other settings.
+    """
+    Save download parameters to configuration file without overwriting other settings.
+
+    This function updates only the `parameters` section of the config, preserving
+    any other settings (such as the download path) that may already exist in the
+    configuration file. Parameters are saved under the `PARAM_KEY` ("parameters")
+    key in the JSON config structure.
 
     Args:
-        codec: Audio codec or video container.
-        kbps: Audio bitrate in kbps.
-        quality: Video quality preset (best, 1080p, 720p, 480p, 360p, 2160p, worst).
-        jobs: Maximum concurrent downloads.
-        quiet: Suppress yt-dlp output.
-        metadata: Embed metadata and thumbnail.
-        keep: Keep the original downloaded file after conversion.
-        only_video: Download video only.
-        cookies: Path to cookies file or browser name.
-        color: Colored output.
-        encoding: File Encoding.
+        codec (str): Audio codec (e.g., "mp3", "m4a", "flac") or video container
+                     (e.g., "mp4", "mkv", "webm").
+        kbps (int): Audio bitrate in kbps (e.g., 128, 192, 320).
+        quality (str | None): Video quality preset ("best", "worst", "1080p", "720p",
+                              "480p", "360p", "2160p") or None for audio-only.
+        jobs (int): Maximum number of concurrent downloads to run in parallel.
+        quiet (bool): Suppress yt-dlp output and verbose logging.
+        metadata (bool): Embed metadata tags and thumbnail into the output file.
+        keep (bool): Keep the original downloaded file after conversion.
+        only_video (bool): Download video stream only (no audio).
+        cookies (str | None): Path to cookies file or browser name for authentication.
+        color (bool): Enable colored output in success/error messages.
+        encoding (str, optional): File encoding for configuration file.
+                                  Defaults to "utf-8".
 
     Returns:
-        True if parameters saved successfully, False otherwise.
+        bool: True if parameters were saved successfully, False if an error occurred
+              (permission denied, I/O error, or corrupted config).
     """
     set_colors(color)
 
@@ -88,14 +100,25 @@ def set_parameters(
 
 
 def get_parameters(color: bool, encoding: str = "utf-8") -> dict[str, Any]:
-    """Retrieve saved parameters from config file.
+    """
+    Retrieve saved download parameters from the configuration file.
+
+    Loads the parameters section from the config JSON file. If the config file
+    doesn't exist or the parameters key is missing, returns an empty dictionary.
+    This allows callers to safely merge saved parameters with current settings.
+
+    Parameters are retrieved under the `PARAM_KEY` ("parameters") key and may
+    include: codec, kbps, quality, jobs, quiet, metadata, keep, only_video,
+    and cookies.
 
     Args:
-        color: Colored output for error messages.
-        encoding: File Encoding.
+        color (bool): Enable colored output for error messages.
+        encoding (str, optional): File encoding for configuration file.
+                                  Defaults to "utf-8".
 
     Returns:
-        Dictionary with saved parameters or empty dict if none exist.
+        dict[str, Any]: Dictionary containing saved parameters, or empty dict
+                        if no configuration exists or no parameters are saved.
     """
     set_colors(color)
 

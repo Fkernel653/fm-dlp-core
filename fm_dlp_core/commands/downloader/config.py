@@ -41,7 +41,19 @@ class DownloadConfig:
         self.encoding = encoding
 
     def apply_config(self) -> dict[str, Any]:
-        """Apply saved config if requested and return parameters dict."""
+        """
+        Apply saved configuration settings if requested and return parameters dict.
+
+        If `use_config` is True, this method retrieves previously saved parameters
+        from the configuration storage and merges them with the current instance
+        values, giving priority to saved values. If `use_config` is False or no
+        saved configuration exists, the current instance values are returned unchanged.
+
+        Returns:
+            dict[str, Any]: A dictionary containing the final parameters to be used
+                for downloading. Keys include: codec, kbps, quality, jobs, quiet,
+                metadata, keep, only_video, and cookies.
+        """
         if self.use_config:
             params = get_parameters(self.color, self.encoding)
             return {
@@ -68,7 +80,18 @@ class DownloadConfig:
         }
 
     def save_config(self) -> bool:
-        """Save current settings to config file."""
+        """
+        Save current download settings to the persistent configuration file.
+
+        This method persists the current instance parameters (codec, quality, jobs,
+        etc.) to the user's configuration storage so they can be reused in future
+        sessions via the `--use-config` option. The method is only executed if
+        the `save` flag is True.
+
+        Returns:
+            bool: True if configuration was saved successfully or if `save` is False
+                (no operation needed), False if an error occurred during saving.
+        """
         if self.save:
             return set_parameters(
                 self.codec,

@@ -1,3 +1,24 @@
+"""
+Utility modules for the fm-dlp core package.
+
+This package provides shared utilities used across the application including:
+- Color management and styled terminal output
+- Codec and container format constants
+- Terminal output helper functions
+
+Constants:
+    AUDIO_CODECS: Set of supported audio codec formats (mp3, aac, flac, etc.)
+    VIDEO_CONTAINERS: Set of supported video container formats (mp4, mkv, etc.)
+    ALL_CODECS: Union of AUDIO_CODECS and VIDEO_CONTAINERS
+    VIDEO_CONTAINER_AUDIO_MAP: Mapping of video containers to their default
+                               audio codec for extraction
+
+Functions:
+    echo: Print a message to stdout or stderr with newline.
+
+The colors submodule provides comprehensive color formatting for terminal output.
+"""
+
 import sys
 from typing import TextIO
 

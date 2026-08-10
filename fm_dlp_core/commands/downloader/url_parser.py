@@ -25,7 +25,27 @@ class URLParser:
         return [u.strip() for u in self.urls.replace(",", " ").split() if u.strip()]
 
     def _parse_url_file(self, file_path: Path) -> list[str]:
-        """Read and parse URLs from a text file (one URL per line)."""
+        """
+        Read and parse URLs from a text file with robust error handling.
+
+        The file should be UTF-8 encoded (the method exits with an error otherwise).
+        Each line can contain:
+        - A single URL
+        - Multiple comma-separated URLs
+        - Multiple space-separated URLs
+        Lines starting with '#' are treated as comments and ignored.
+        Empty lines are skipped.
+
+        Args:
+            file_path (Path): The path object pointing to the URL file.
+
+        Returns:
+            list[str]: A list of valid URL strings extracted from the file.
+
+        Raises:
+            SystemExit: If the file cannot be read due to encoding or I/O errors,
+                with an appropriate error message printed to stderr.
+        """
         urls_from_file = []
 
         try:
