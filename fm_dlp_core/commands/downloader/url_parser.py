@@ -1,8 +1,9 @@
 """URL parsing utilities."""
 
+import sys
 from pathlib import Path
 
-from ...utils import echo, sys
+from ...utils import echo
 from ...utils.colors import error, info
 
 
