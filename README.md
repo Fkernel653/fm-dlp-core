@@ -2,8 +2,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=fff&style=for-the-badge)](https://python.org)
 [![PyPI](https://img.shields.io/pypi/v/fm-dlp-core?style=for-the-badge&logo=pypi&logoColor=fff&label=PyPI&color=007ec6)](https://pypi.org/project/fm-dlp-core)
-[![License](https://img.shields.io/badge/License-GPLv3-00b96b?style=for-the-badge)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-9cf?style=for-the-badge)]()
+[![License](https://img.shields.io/badge/License-AGPLv3-00b96b?style=for-the-badge)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-9cf?style=for-the-badge)](<>)
 [![Ruff](https://img.shields.io/badge/Code%20Style-Ruff-ff69b4?logo=ruff&logoColor=fff&style=for-the-badge)](https://docs.astral.sh/ruff)
 
 **fm-dlp-core** is a powerful Python library for searching and downloading content from YouTube, YouTube Music, and over 1000+ supported sites. Built on top of yt-dlp, it provides a clean, async-first API with rich features including concurrent downloads, metadata embedding, and flexible output formatting.
@@ -12,17 +12,17 @@
 
 ## ✨ Key Features
 
-| Feature | Description |
-|---------|-------------|
-| 🎵 **Audio Extraction** | Extract audio in 8 formats: MP3, AAC, FLAC, M4A, Opus, Vorbis, WAV, ALAC |
-| 🎬 **Video Download** | Download videos in MP4, MKV, WebM, MOV, AVI, FLV with quality selection |
-| 🔍 **Search** | Search YouTube videos and YouTube Music tracks/albums with formatted output |
-| ⚡ **Concurrent Downloads** | Download multiple files in parallel with configurable job limits |
-| 🏷️ **Metadata Embedding** | Automatically embed tags and thumbnails into audio files |
-| 🔐 **Authentication** | Support for cookies (file or browser) to access restricted content |
-| 💾 **Persistent Config** | Save and load download preferences across sessions |
-| 🎨 **Colored Output** | Beautiful terminal output with ANSI colors (toggleable) |
-| 🔌 **Extensible** | Create custom search providers for any platform |
+| Feature                     | Description                                                                 |
+| --------------------------- | --------------------------------------------------------------------------- |
+| 🎵 **Audio Extraction**     | Extract audio in 8 formats: MP3, AAC, FLAC, M4A, Opus, Vorbis, WAV, ALAC    |
+| 🎬 **Video Download**       | Download videos in MP4, MKV, WebM, MOV, AVI, FLV with quality selection     |
+| 🔍 **Search**               | Search YouTube videos and YouTube Music tracks/albums with formatted output |
+| ⚡ **Concurrent Downloads** | Download multiple files in parallel with configurable job limits            |
+| 🏷️ **Metadata Embedding**   | Automatically embed tags and thumbnails into audio files                    |
+| 🔐 **Authentication**       | Support for cookies (file or browser) to access restricted content          |
+| 💾 **Persistent Config**    | Save and load download preferences across sessions                          |
+| 🎨 **Colored Output**       | Beautiful terminal output with ANSI colors (toggleable)                     |
+| 🔌 **Extensible**           | Create custom search providers for any platform                             |
 
 ---
 
@@ -74,6 +74,7 @@ pip install fm-dlp-core
 ```
 
 For development:
+
 ```bash
 git clone https://github.com/Fkernel653/fm-dlp-core
 cd fm-dlp-core
@@ -85,29 +86,34 @@ pip install -e .
 ## ⚙️ Requirements
 
 ### Python Version
+
 - **Python 3.10+** — Required for asyncio and type hint features
 
 ### FFmpeg (Required)
+
 FFmpeg is essential for audio/video processing, conversion, and metadata embedding.
 
-| Platform | Installation Command |
-|----------|---------------------|
-| **macOS** | `brew install ffmpeg` |
-| **Debian/Ubuntu** | `sudo apt install ffmpeg` |
-| **Fedora** | `sudo dnf install ffmpeg` |
-| **Windows** | Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH |
+| Platform          | Installation Command                                                         |
+| ----------------- | ---------------------------------------------------------------------------- |
+| **macOS**         | `brew install ffmpeg`                                                        |
+| **Debian/Ubuntu** | `sudo apt install ffmpeg`                                                    |
+| **Fedora**        | `sudo dnf install ffmpeg`                                                    |
+| **Windows**       | Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH |
 
 ---
 
 ## 🧠 Core Concepts
 
 ### Async-First Design
+
 All download operations are asynchronous, allowing you to run multiple downloads concurrently without blocking your application.
 
 ### Configuration Persistence
+
 Settings like codec, bitrate, quality, and download path can be saved to a JSON file and reused across sessions.
 
 ### Provider Pattern
+
 Search functionality is built on a provider pattern, making it easy to add support for new platforms by subclassing `BaseProvider`.
 
 ---
@@ -172,29 +178,29 @@ async with Download(
 
 ### Supported Codecs
 
-| Type | Formats |
-|------|---------|
+| Type      | Formats                                                      |
+| --------- | ------------------------------------------------------------ |
 | **Audio** | `mp3`, `aac`, `flac`, `m4a`, `opus`, `vorbis`, `wav`, `alac` |
-| **Video** | `mp4`, `mov`, `mkv`, `webm`, `avi`, `flv` |
+| **Video** | `mp4`, `mov`, `mkv`, `webm`, `avi`, `flv`                    |
 
 ### Download Parameters
 
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `url` | `str` | URL(s) to download (comma/space separated or path to file) | **Required** |
-| `codec` | `str` | Output format (see Supported Codecs) | `"m4a"` (macOS) / `"opus"` (others) |
-| `kbps` | `int` | Audio bitrate in kbps | `192` |
-| `quality` | `str` | Video quality (`best`, `worst`, `1080p`, `720p`, etc.) | `"best"` |
-| `jobs` | `int` | Number of concurrent downloads | `4` |
-| `quiet` | `bool` | Suppress output messages | `False` |
-| `metadata` | `bool` | Embed metadata and thumbnail | `True` |
-| `keep` | `bool` | Keep original downloaded file | `False` |
-| `save` | `bool` | Save parameters to config | `False` |
-| `use_config` | `bool` | Load parameters from config | `False` |
-| `path` | `str` | Download directory | Current directory |
-| `only_video` | `bool` | Download video only (skip audio extraction) | `False` |
-| `cookies` | `str \| None` | Cookies file path or browser name | `None` |
-| `color` | `bool` | Enable colored output | `True` |
+| Parameter    | Type          | Description                                                | Default                             |
+| ------------ | ------------- | ---------------------------------------------------------- | ----------------------------------- |
+| `url`        | `str`         | URL(s) to download (comma/space separated or path to file) | **Required**                        |
+| `codec`      | `str`         | Output format (see Supported Codecs)                       | `"m4a"` (macOS) / `"opus"` (others) |
+| `kbps`       | `int`         | Audio bitrate in kbps                                      | `192`                               |
+| `quality`    | `str`         | Video quality (`best`, `worst`, `1080p`, `720p`, etc.)     | `"best"`                            |
+| `jobs`       | `int`         | Number of concurrent downloads                             | `4`                                 |
+| `quiet`      | `bool`        | Suppress output messages                                   | `False`                             |
+| `metadata`   | `bool`        | Embed metadata and thumbnail                               | `True`                              |
+| `keep`       | `bool`        | Keep original downloaded file                              | `False`                             |
+| `save`       | `bool`        | Save parameters to config                                  | `False`                             |
+| `use_config` | `bool`        | Load parameters from config                                | `False`                             |
+| `path`       | `str`         | Download directory                                         | Current directory                   |
+| `only_video` | `bool`        | Download video only (skip audio extraction)                | `False`                             |
+| `cookies`    | `str \| None` | Cookies file path or browser name                          | `None`                              |
+| `color`      | `bool`        | Enable colored output                                      | `True`                              |
 
 ---
 
@@ -244,11 +250,11 @@ for result in search(
 
 ### Output Modes
 
-| Mode | Parameter | Description |
-|------|-----------|-------------|
+| Mode          | Parameter                   | Description                            |
+| ------------- | --------------------------- | -------------------------------------- |
 | **Formatted** | `raw=False, only_url=False` | Beautiful colored output with metadata |
-| **URL-Only** | `only_url=True` | Just the URLs (great for piping) |
-| **Raw Data** | `raw=True` | Python dictionaries with full metadata |
+| **URL-Only**  | `only_url=True`             | Just the URLs (great for piping)       |
+| **Raw Data**  | `raw=True`                  | Python dictionaries with full metadata |
 
 ```python
 # Get only URLs
@@ -266,15 +272,15 @@ if urls:
 
 ### Search Parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `query` | `str` | Search query string |
-| `limit` | `int` | Maximum number of results (1-100) |
+| Parameter  | Type   | Description                                      |
+| ---------- | ------ | ------------------------------------------------ |
+| `query`    | `str`  | Search query string                              |
+| `limit`    | `int`  | Maximum number of results (1-100)                |
 | `yt_video` | `bool` | `True` = YouTube videos, `False` = YouTube Music |
-| `album` | `bool` | `True` = search albums, `False` = search tracks |
-| `raw` | `bool` | Output raw Python dicts |
-| `only_url` | `bool` | Output only URLs |
-| `color` | `bool` | Enable colored output |
+| `album`    | `bool` | `True` = search albums, `False` = search tracks  |
+| `raw`      | `bool` | Output raw Python dicts                          |
+| `only_url` | `bool` | Output only URLs                                 |
+| `color`    | `bool` | Enable colored output                            |
 
 ---
 
@@ -324,28 +330,28 @@ print(f"Downloads will be saved to: {path}")
 
 ### Configuration File Location
 
-| Platform | Path |
-|----------|------|
-| **Windows** | `%LOCALAPPDATA%\fm-dlp\config.json` |
-| **macOS** | `~/Library/Application Support/fm-dlp/config.json` |
-| **Linux** | `~/.config/fm-dlp/config.json` |
+| Platform    | Path                                               |
+| ----------- | -------------------------------------------------- |
+| **Windows** | `%LOCALAPPDATA%\fm-dlp\config.json`                |
+| **macOS**   | `~/Library/Application Support/fm-dlp/config.json` |
+| **Linux**   | `~/.config/fm-dlp/config.json`                     |
 
 ### Configuration Structure
 
 ```json
 {
-    "parameters": {
-        "codec": "mp3",
-        "kbps": 256,
-        "quality": "best",
-        "jobs": 4,
-        "quiet": false,
-        "metadata": true,
-        "keep": false,
-        "only_video": false,
-        "cookies": null
-    },
-    "path": "/home/user/Music"
+  "parameters": {
+    "codec": "mp3",
+    "kbps": 256,
+    "quality": "best",
+    "jobs": 4,
+    "quiet": false,
+    "metadata": true,
+    "keep": false,
+    "only_video": false,
+    "cookies": null
+  },
+  "path": "/home/user/Music"
 }
 ```
 
@@ -451,41 +457,41 @@ asyncio.run(
 
 ### Core Package
 
-| Module | Description |
-|--------|-------------|
-| `fm_dlp_core` | Main package with `Download`, `Search`, and utilities |
+| Module                            | Description                                                 |
+| --------------------------------- | ----------------------------------------------------------- |
+| `fm_dlp_core`                     | Main package with `Download`, `Search`, and utilities       |
 | `fm_dlp_core.commands.downloader` | Download functionality with `Download` and `run_downloader` |
-| `fm_dlp_core.commands.search` | Search functionality with `Search` and `search` |
-| `fm_dlp_core.utils` | Shared utilities (colors, constants, config) |
-| `fm_dlp_core.utils.config` | Configuration management (paths, parameters) |
-| `fm_dlp_core.utils.colors` | Terminal color utilities |
+| `fm_dlp_core.commands.search`     | Search functionality with `Search` and `search`             |
+| `fm_dlp_core.utils`               | Shared utilities (colors, constants, config)                |
+| `fm_dlp_core.utils.config`        | Configuration management (paths, parameters)                |
+| `fm_dlp_core.utils.colors`        | Terminal color utilities                                    |
 
 ### Key Classes
 
-| Class | Module | Description |
-|-------|--------|-------------|
-| `Download` | `commands.downloader` | Async downloader with context manager |
-| `DownloadConfig` | `commands.downloader.config` | Configuration container |
-| `OptionsBuilder` | `commands.downloader.options_builder` | yt-dlp options builder |
-| `URLParser` | `commands.downloader.url_parser` | Parse URLs from string/file |
-| `Search` | `commands.search` | Main search handler |
-| `ResultFormatter` | `commands.search.formatters` | Format search results |
-| `BaseProvider` | `commands.search.providers` | Abstract provider base |
-| `YouTubeProvider` | `commands.search.providers` | YouTube video search |
-| `YouTubeMusicProvider` | `commands.search.providers` | YouTube Music search |
+| Class                  | Module                                | Description                           |
+| ---------------------- | ------------------------------------- | ------------------------------------- |
+| `Download`             | `commands.downloader`                 | Async downloader with context manager |
+| `DownloadConfig`       | `commands.downloader.config`          | Configuration container               |
+| `OptionsBuilder`       | `commands.downloader.options_builder` | yt-dlp options builder                |
+| `URLParser`            | `commands.downloader.url_parser`      | Parse URLs from string/file           |
+| `Search`               | `commands.search`                     | Main search handler                   |
+| `ResultFormatter`      | `commands.search.formatters`          | Format search results                 |
+| `BaseProvider`         | `commands.search.providers`           | Abstract provider base                |
+| `YouTubeProvider`      | `commands.search.providers`           | YouTube video search                  |
+| `YouTubeMusicProvider` | `commands.search.providers`           | YouTube Music search                  |
 
 ### Key Functions
 
-| Function | Module | Description |
-|----------|--------|-------------|
-| `run_downloader` | `commands.downloader` | Async download entry point |
-| `search` | `commands.search` | Convenience search function |
-| `set_parameters` | `utils.config.parametrs` | Save download parameters |
-| `get_parameters` | `utils.config.parametrs` | Load download parameters |
-| `set_path` | `utils.config.path` | Set download directory |
-| `get_path` | `utils.config.path` | Get download directory |
-| `echo` | `utils` | Print with color support |
-| `success/error/info/hint` | `utils.colors` | Formatted colored messages |
+| Function                  | Module                   | Description                 |
+| ------------------------- | ------------------------ | --------------------------- |
+| `run_downloader`          | `commands.downloader`    | Async download entry point  |
+| `search`                  | `commands.search`        | Convenience search function |
+| `set_parameters`          | `utils.config.parametrs` | Save download parameters    |
+| `get_parameters`          | `utils.config.parametrs` | Load download parameters    |
+| `set_path`                | `utils.config.path`      | Set download directory      |
+| `get_path`                | `utils.config.path`      | Get download directory      |
+| `echo`                    | `utils`                  | Print with color support    |
+| `success/error/info/hint` | `utils.colors`           | Formatted colored messages  |
 
 ---
 
@@ -613,14 +619,14 @@ asyncio.run(safe_download("https://youtube.com/watch?v=invalid_id"))
 
 ### Format Elements
 
-| Element | Description |
-|---------|-------------|
-| **N.** | Sequential result number |
-| **Title** | Track, album, or video title |
-| **Artist** | Artist or channel name |
-| `├─└─│` | Tree structure for visual hierarchy |
-| **Views │ Duration** | View count and length |
-| **URL** | Direct link to content |
+| Element              | Description                         |
+| -------------------- | ----------------------------------- |
+| **N.**               | Sequential result number            |
+| **Title**            | Track, album, or video title        |
+| **Artist**           | Artist or channel name              |
+| `├─└─│`              | Tree structure for visual hierarchy |
+| **Views │ Duration** | View count and length               |
+| **URL**              | Direct link to content              |
 
 ### Colored Output Functions
 
@@ -637,15 +643,15 @@ print(hint("Try using a higher bitrate for better quality"))
 
 ## 📄 License
 
-This project is licensed under the **GPLv3 License** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **AGPLv3 License** — see the [LICENSE](LICENSE) file for details.
 
 ### Acknowledgments
 
-| Library | Purpose |
-|---------|---------|
-| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Download engine supporting 1000+ sites |
-| [ytmusicapi](https://github.com/sigma67/ytmusicapi) | YouTube Music search API |
-| [mutagen](https://github.com/quodlibet/mutagen) | Metadata tagging for audio files |
+| Library                                             | Purpose                                |
+| --------------------------------------------------- | -------------------------------------- |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp)          | Download engine supporting 1000+ sites |
+| [ytmusicapi](https://github.com/sigma67/ytmusicapi) | YouTube Music search API               |
+| [mutagen](https://github.com/quodlibet/mutagen)     | Metadata tagging for audio files       |
 
 ---
 
@@ -655,4 +661,4 @@ This project is licensed under the **GPLv3 License** — see the [LICENSE](LICEN
 
 ---
 
-*If you encounter any issues, please [open an issue](https://github.com/Fkernel653/fm-dlp-core/issues) on GitHub.*
+_If you encounter any issues, please [open an issue](https://github.com/Fkernel653/fm-dlp-core/issues) on GitHub._
