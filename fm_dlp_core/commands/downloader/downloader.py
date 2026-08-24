@@ -3,6 +3,8 @@
 import asyncio
 from collections.abc import AsyncIterator
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from types import TracebackType
+from typing import final
 
 from yt_dlp import YoutubeDL
 
@@ -13,6 +15,7 @@ from .options_builder import OptionsBuilder
 from .url_parser import URLParser
 
 
+@final
 class Download:
     """Async YouTube audio/video downloader."""
 
@@ -32,7 +35,6 @@ class Download:
         only_video: bool,
         cookies: str | None,
         color: bool,
-        encoding: str = "utf-8",
     ):
         """Initialize downloader with configuration."""
         self.config = DownloadConfig(
@@ -50,19 +52,19 @@ class Download:
             only_video=only_video,
             cookies=cookies,
             color=color,
-            encoding=encoding,
         )
 
         params = self.config.apply_config()
-        self.codec = params["codec"]
-        self.kbps = params["kbps"]
-        self.quality = params["quality"]
-        self.jobs = params["jobs"]
-        self.quiet = params["quiet"]
-        self.metadata = params["metadata"]
-        self.keep = params["keep"]
-        self.only_video = params["only_video"]
-        self.cookies = params["cookies"]
+
+        self.codec: str = params["codec"]
+        self.kbps: int = params["kbps"]
+        self.quality: str = params["quality"]
+        self.jobs: int = params["jobs"]
+        self.quiet: bool = params["quiet"]
+        self.metadata: bool = params["metadata"]
+        self.keep: bool = params["keep"]
+        self.only_video: bool = params["only_video"]
+        self.cookies: str = params["cookies"]
 
         if not self.config.save_config():
             return
@@ -102,7 +104,12 @@ class Download:
         self._executor = self._get_executor()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ):
         """Cleanup thread pool executor on context exit."""
         self._executor.shutdown(wait=True, cancel_futures=False)
         return False
@@ -115,7 +122,7 @@ class Download:
         """Async iterator yielding download results with concurrency control."""
         sem = asyncio.Semaphore(self.jobs)
 
-        async def download_one(url):
+        async def download_one(url: str):
             async with sem:
                 return await self._download_url(url)
 
@@ -176,7 +183,7 @@ class Download:
             color=self.color,
         ).build()
 
-        with YoutubeDL(options) as ydl:  # type: ignore
+        with YoutubeDL(options) as ydl:
             ydl.download([url])
 
 

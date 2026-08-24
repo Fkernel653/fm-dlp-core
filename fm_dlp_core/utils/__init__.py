@@ -20,12 +20,14 @@ The colors submodule provides comprehensive color formatting for terminal output
 """
 
 import sys
-from typing import TextIO
+from typing import TextIO, TypedDict
 
-AUDIO_CODECS = {"mp3", "aac", "flac", "m4a", "opus", "vorbis", "wav", "alac"}
-VIDEO_CONTAINERS = {"mp4", "mov", "mkv", "webm", "avi", "flv"}
-ALL_CODECS = AUDIO_CODECS | VIDEO_CONTAINERS
-VIDEO_CONTAINER_AUDIO_MAP = {
+from .colors import error
+
+AUDIO_CODECS: set[str] = {"mp3", "aac", "flac", "m4a", "opus", "vorbis", "wav", "alac"}
+VIDEO_CONTAINERS: set[str] = {"mp4", "mov", "mkv", "webm", "avi", "flv"}
+ALL_CODECS: set[str] = AUDIO_CODECS | VIDEO_CONTAINERS
+VIDEO_CONTAINER_AUDIO_MAP: dict[str, str] = {
     "mp4": "m4a",
     "mov": "m4a",
     "mkv": "opus",
@@ -35,6 +37,20 @@ VIDEO_CONTAINER_AUDIO_MAP = {
 }
 
 
+class DownloadParams(TypedDict, total=False):
+    """Parameters for download configuration."""
+
+    codec: str
+    kbps: int
+    quality: str
+    jobs: int
+    quiet: bool
+    metadata: bool
+    keep: bool
+    only_video: bool
+    cookies: str | None
+
+
 def echo(text: str, file: TextIO = sys.stdout) -> None:
     """Print message to file.
 
@@ -42,4 +58,14 @@ def echo(text: str, file: TextIO = sys.stdout) -> None:
         text: Message to print.
         file: File to write to (default: stdout).
     """
-    file.write(text + "\n")
+    _ = file.write(text + "\n")
+
+
+def echo_error(text: str) -> None:
+    """Print error message to file.
+
+    Args:
+        text: Message to print.
+    """
+    echo(error(text), file=sys.stderr)
+    sys.exit(1)

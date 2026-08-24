@@ -1,10 +1,14 @@
 """YouTube search handlers."""
 
+from collections.abc import Generator
+from typing import final
+
 from ...utils.colors import set_colors
 from .formatters import ResultFormatter
-from .providers import Generator, YouTubeMusicProvider, YouTubeProvider
+from .providers import YouTubeMusicProvider, YouTubeProvider
 
 
+@final
 class Search:
     """
     Handles searching across YouTube and YouTube Music with unified interface.

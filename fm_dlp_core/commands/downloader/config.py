@@ -1,8 +1,12 @@
 """Configuration handling for downloader."""
 
-from ...utils.config.parametrs import Any, get_parameters, set_parameters
+from typing import final
+
+from ...utils import DownloadParams
+from ...utils.config.parametrs import get_parameters, set_parameters
 
 
+@final
 class DownloadConfig:
     """Configuration container for download settings."""
 
@@ -22,7 +26,6 @@ class DownloadConfig:
         only_video: bool,
         cookies: str | None,
         color: bool,
-        encoding: str = "utf-8",
     ):
         self.url = url
         self.codec = codec
@@ -38,9 +41,8 @@ class DownloadConfig:
         self.only_video = only_video
         self.cookies = cookies
         self.color = color
-        self.encoding = encoding
 
-    def apply_config(self) -> dict[str, Any]:
+    def apply_config(self) -> DownloadParams:
         """
         Apply saved configuration settings if requested and return parameters dict.
 
@@ -55,7 +57,7 @@ class DownloadConfig:
                 metadata, keep, only_video, and cookies.
         """
         if self.use_config:
-            params = get_parameters(self.color, self.encoding)
+            params = get_parameters(self.color)
             return {
                 "codec": params.get("codec", self.codec),
                 "kbps": params.get("kbps", self.kbps),
@@ -104,6 +106,5 @@ class DownloadConfig:
                 self.only_video,
                 self.cookies,
                 self.color,
-                self.encoding,
             )
         return True

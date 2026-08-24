@@ -1,12 +1,13 @@
 """URL parsing utilities."""
 
-import sys
 from pathlib import Path
+from typing import final
 
-from ...utils import echo
-from ...utils.colors import error, info
+from ...utils import echo, echo_error
+from ...utils.colors import info
 
 
+@final
 class URLParser:
     """Parse URLs from string or file."""
 
@@ -47,12 +48,12 @@ class URLParser:
             SystemExit: If the file cannot be read due to encoding or I/O errors,
                 with an appropriate error message printed to stderr.
         """
-        urls_from_file = []
+        urls_from_file: list[str] = []
 
         try:
             content = file_path.read_text(encoding="utf-8")
             for line in content.splitlines():
-                line = line.strip()
+                line = str(line.strip())
                 if line and not line.startswith("#"):
                     urls_from_file.extend(
                         u.strip() for u in line.replace(",", " ").split() if u.strip()
@@ -62,20 +63,20 @@ class URLParser:
                 echo(info(f"Loaded {len(urls_from_file)} URLs from file: {self.urls}"))
 
         except UnicodeDecodeError:
-            echo(
-                error(
-                    f"File '{self.urls}' is not UTF-8 encoded. Please save it as UTF-8.",
-                ),
-                file=sys.stderr,
+            echo_error(
+                f"File '{self.urls}' is not UTF-8 encoded. Please save it as UTF-8."
             )
-            sys.exit(1)
+
+        except FileNotFoundError:
+            echo_error(f"File not found: '{self.urls}'")
+
+        except PermissionError:
+            echo_error(f"Permission denied: Cannot read file '{self.urls}'")
+
+        except IsADirectoryError:
+            echo_error(f"Path is a directory, not a file: '{self.urls}'")
 
         except OSError as e:
-            echo(error(f"Error reading URL file: {e}"), file=sys.stderr)
-            sys.exit(1)
-
-        except Exception as e:
-            echo(error(f"Error reading URL file: {e}"), file=sys.stderr)
-            sys.exit(1)
+            echo_error(f"Error reading URL file: {e}")
 
         return urls_from_file

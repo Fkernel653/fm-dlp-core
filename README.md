@@ -1,6 +1,6 @@
 # fm-dlp-core — Core Library for YouTube & 1000+ Sites
 
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=fff&style=for-the-badge)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=fff&style=for-the-badge)](https://python.org)
 [![PyPI](https://img.shields.io/pypi/v/fm-dlp-core?style=for-the-badge&logo=pypi&logoColor=fff&label=PyPI&color=007ec6)](https://pypi.org/project/fm-dlp-core)
 [![License](https://img.shields.io/badge/License-AGPLv3-00b96b?style=for-the-badge)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-9cf?style=for-the-badge)](<>)
@@ -87,7 +87,7 @@ pip install -e .
 
 ### Python Version
 
-- **Python 3.10+** — Required for asyncio and type hint features
+- **Python 3.11+** — Required for tomllib, asyncio and type hint features
 
 ### FFmpeg (Required)
 
@@ -110,7 +110,7 @@ All download operations are asynchronous, allowing you to run multiple downloads
 
 ### Configuration Persistence
 
-Settings like codec, bitrate, quality, and download path can be saved to a JSON file and reused across sessions.
+Settings like codec, bitrate, quality, and download path can be saved to a TOML file and reused across sessions.
 
 ### Provider Pattern
 
@@ -308,7 +308,7 @@ set_parameters(
 )
 
 # Load saved parameters
-params = get_parameters(color=True)
+params = get_parameters()
 print(params)  # {'codec': 'mp3', 'kbps': 256, ...}
 ```
 
@@ -320,11 +320,11 @@ Set and get the default download directory:
 from fm_dlp_core.utils.config.path import set_path, get_path
 
 # Set download path
-result = set_path("/my/download/folder", color=True)
+result = set_path("/my/download/folder")
 print(result)  # "Configuration saved successfully"
 
 # Get current path
-path = get_path(color=True)
+path = get_path()
 print(f"Downloads will be saved to: {path}")
 ```
 
@@ -332,27 +332,43 @@ print(f"Downloads will be saved to: {path}")
 
 | Platform    | Path                                               |
 | ----------- | -------------------------------------------------- |
-| **Windows** | `%LOCALAPPDATA%\fm-dlp\config.json`                |
-| **macOS**   | `~/Library/Application Support/fm-dlp/config.json` |
-| **Linux**   | `~/.config/fm-dlp/config.json`                     |
+| **Windows** | `%LOCALAPPDATA%\fm-dlp\config.toml`                |
+| **macOS**   | `~/Library/Application Support/fm-dlp/config.toml` |
+| **Linux**   | `~/.config/fm-dlp/config.toml`                     |
 
 ### Configuration Structure
 
-```json
-{
-  "parameters": {
-    "codec": "mp3",
-    "kbps": 256,
-    "quality": "best",
-    "jobs": 4,
-    "quiet": false,
-    "metadata": true,
-    "keep": false,
-    "only_video": false,
-    "cookies": null
-  },
-  "path": "/home/user/Music"
-}
+#### without cookies:
+
+```toml
+path = "/home/user/folder"
+
+[parameters]
+codec = "opus"
+kbps = 256
+quality = "best"
+jobs = 5
+quiet = false
+metadata = true
+keep = false
+only_video = false
+```
+
+#### with cookies:
+
+```toml
+path = "/home/user/folder"
+
+[parameters]
+codec = "opus"
+kbps = 256
+quality = "best"
+jobs = 5
+quiet = false
+metadata = true
+keep = false
+only_video = false
+cookies = "firefox"
 ```
 
 ---

@@ -1,9 +1,8 @@
 """Persistent download path storage using JSON config file."""
 
-import sys
 from pathlib import Path
 
-from ...utils import echo
+from ...utils import echo, echo_error
 from ..colors import (
     BOLD_GREEN,
     error,
@@ -14,13 +13,12 @@ from ..colors import (
 )
 from . import CONFIG_FILE, load_config, update_config
 
-PATH_KEY = "path"
+PATH_KEY: str = "path"
 
 
 def set_path(
     path: str,
-    color: bool,
-    encoding: str = "utf-8",
+    color: bool = True,
 ) -> str:
     """
     Set and save the download directory path to persistent configuration.
@@ -36,9 +34,7 @@ def set_path(
     Args:
         path (str): Directory path for downloads. Can be absolute or relative,
                     and may include ~ for home directory expansion.
-        color (bool): Enable colored output in success/error messages.
-        encoding (str, optional): File encoding for configuration file.
-                                  Defaults to "utf-8".
+        color (bool): Enable colored output in success/error messages. (default: True)
 
     Returns:
         str: Success message indicating the path was saved, including the
@@ -53,13 +49,12 @@ def set_path(
         input_path = str(Path(path).expanduser().resolve())
 
         if not Path(input_path).is_dir():
-            echo(error("Please enter the correct path!"), file=sys.stderr)
-            sys.exit(1)
+            echo_error("Please enter the correct path!")
 
-        config = load_config(color, encoding)
+        config = load_config(color)
         config[PATH_KEY] = input_path
 
-        if not update_config(config, encoding):
+        if not update_config(config):
             raise PermissionError()
 
         return styled("Configuration saved successfully", BOLD_GREEN)
@@ -71,8 +66,7 @@ def set_path(
 
 
 def get_path(
-    color: bool,
-    encoding: str = "utf-8",
+    color: bool = True,
 ) -> str:
     """
     Get the configured download directory path from persistent storage.
@@ -86,9 +80,7 @@ def get_path(
     to be used automatically.
 
     Args:
-        color (bool): Enable colored output in info and error messages.
-        encoding (str, optional): File encoding for configuration file.
-                                  Defaults to "utf-8".
+        color (bool): Enable colored output in info and error messages. (default: True)
 
     Returns:
         str: The resolved download directory path as an absolute string.
@@ -101,12 +93,11 @@ def get_path(
         echo(hint("Run the 'config' command to configure the download path\n"))
         return str(Path.home())
 
-    data = load_config(color, encoding)
-    download_path = data.get(PATH_KEY)
+    data = load_config(color)
+    download_path = str(data.get(PATH_KEY))
 
     if not download_path or not Path(download_path).is_dir():
         set_colors(color)
-        echo(error("Download path does not exist."), file=sys.stderr)
-        sys.exit(1)
+        echo_error("Download path does not exist.")
 
     return download_path

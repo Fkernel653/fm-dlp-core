@@ -40,16 +40,16 @@ BOLD_GREEN = "\033[1;32m"
 BOLD_YELLOW = "\033[1;33m"
 BOLD_CYAN = "\033[1;36m"
 
-_COLORS_ENABLED = True
+colors_enabled = True
 
 
 def set_colors(enabled: bool):
-    global _COLORS_ENABLED
-    _COLORS_ENABLED = enabled
+    global colors_enabled
+    colors_enabled = enabled
 
 
 def is_colors_enabled() -> bool:
-    return _COLORS_ENABLED
+    return colors_enabled
 
 
 def styled(text: str, color: str) -> str:

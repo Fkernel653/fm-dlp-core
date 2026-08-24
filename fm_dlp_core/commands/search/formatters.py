@@ -1,8 +1,11 @@
 """Result formatting utilities for search results."""
 
+from typing import final
+
 from ...utils.colors import BOLD_CYAN, BOLD_RED, BOLD_WHITE, GRAY, RESET, WHITE
 
 
+@final
 class ResultFormatter:
     """Format search results with optional metadata and colors."""
 
@@ -74,7 +77,7 @@ class ResultFormatter:
         return f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}"
 
     @staticmethod
-    def extract_artist(item: dict) -> str:
+    def extract_artist(item: dict[str, list[str]]) -> str:
         """
         Extract artist name from a YouTube Music API response item.
 
@@ -89,7 +92,7 @@ class ResultFormatter:
             str: The artist name or "Unknown Artist" if not found.
         """
         artists = item.get("artists", [])
-        return artists[0].get("name", "Unknown Artist") if artists else "Unknown Artist"
+        return artists[0].get("name", "Unknown Artist")
 
     def fmt_result(
         self,
@@ -99,7 +102,7 @@ class ResultFormatter:
         url: str | None,
         is_yt_video: bool,
         is_track: bool,
-        **kwargs,
+        **kwargs: dict[str, str | int | float],
     ) -> str:
         """
         Format a single search result with a structured tree-like layout.
@@ -139,16 +142,16 @@ class ResultFormatter:
         lines = [f"\n{c['bold_cyan']}{num}. {c['bold_white']}{title}"]
 
         if is_yt_video:
-            views = kwargs.get("views", "N/A")
-            duration = kwargs.get("duration", "N/A")
+            views = str(kwargs.get("views", "N/A"))
+            duration = str(kwargs.get("duration", "N/A"))
 
             lines.append(f"{tree} {w + artist}")
             lines.append(f"{tree} {w + views}{sep}{w + duration}")
 
         elif is_track:
-            album = kwargs.get("album", "Unknown Album")
-            views = kwargs.get("views", "N/A")
-            duration = kwargs.get("duration", "N/A")
+            album = str(kwargs.get("album", "Unknown Album"))
+            views = str(kwargs.get("views", "N/A"))
+            duration = str(kwargs.get("duration", "N/A"))
 
             lines.extend(
                 [
@@ -159,7 +162,7 @@ class ResultFormatter:
             )
 
         else:
-            year = kwargs.get("year", "N/A")
+            year = str(kwargs.get("year", "N/A"))
             lines.extend([f"{tree} {w + artist}", f"{tree} {w + year}"])
         if url:
             lines.append(f"{corner} {c['bold_red']}{url}")

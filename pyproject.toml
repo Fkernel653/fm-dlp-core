@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fm-dlp-core"
-version = "0.1.5.4"
+version = "0.1.6"
 description = "Core package for YouTube audio/video downloading and searching."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "AGPL-3.0-only"
 authors = [
     {name = "Fkernel653"}
@@ -32,7 +32,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",

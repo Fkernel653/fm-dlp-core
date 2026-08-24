@@ -1,11 +1,31 @@
 """Build yt-dlp options."""
 
 from pathlib import Path
-from typing import Any
+from typing import TypedDict, final
 
 from ...utils import AUDIO_CODECS, VIDEO_CONTAINER_AUDIO_MAP, VIDEO_CONTAINERS
 
 
+class YtDlpOptions(TypedDict, total=False):
+    """yt-dlp options dictionary."""
+
+    quiet: bool
+    no_warnings: bool
+    outtmpl: str
+    concurrent_downloads: int
+    concurrent_fragment_downloads: int
+    extractor_retries: int
+    postprocessors: list[dict[str, str]]
+    keepvideo: bool
+    color: str | None
+    format: str
+    cookiefile: str
+    cookiesfrombrowser: tuple[str, ...]
+    embedmetadata: bool
+    writethumbnail: bool
+
+
+@final
 class OptionsBuilder:
     """Build yt-dlp options dictionary."""
 
@@ -64,7 +84,7 @@ class OptionsBuilder:
 
         return self.quality
 
-    def build(self) -> dict[str, Any]:
+    def build(self) -> YtDlpOptions:
         """
         Build a complete yt-dlp options dictionary for the download.
 
@@ -79,7 +99,7 @@ class OptionsBuilder:
             dict[str, Any]: A complete yt-dlp options dictionary ready to be passed
                 to the YoutubeDL constructor.
         """
-        base_opts = {
+        base_opts: YtDlpOptions = {
             "quiet": self.quiet,
             "no_warnings": self.quiet,
             "outtmpl": str(Path(self.path) / "%(title)s.%(ext)s"),
@@ -102,7 +122,7 @@ class OptionsBuilder:
 
         return base_opts
 
-    def _add_cookies(self, opts: dict[str, Any]) -> None:
+    def _add_cookies(self, opts: YtDlpOptions) -> None:
         """Add cookie configuration to options."""
         if self.cookies:
             cookie_path = Path(self.cookies)
@@ -111,19 +131,19 @@ class OptionsBuilder:
             else:
                 opts["cookiesfrombrowser"] = (self.cookies,)
 
-    def _build_video_opts(self, opts: dict[str, Any]) -> None:
+    def _build_video_opts(self, opts: YtDlpOptions) -> None:
         """Build options for video-only download."""
         opts["format"] = self._parse_quality()
 
         if self.codec in VIDEO_CONTAINERS:
-            opts["postprocessors"].append(
+            opts.setdefault("postprocessors", []).append(
                 {
                     "key": "FFmpegVideoConvertor",
                     "preferedformat": self.codec,
                 }
             )
 
-    def _build_audio_opts(self, opts: dict[str, Any]) -> None:
+    def _build_audio_opts(self, opts: YtDlpOptions) -> None:
         """Build options for audio download."""
 
         if self.codec in AUDIO_CODECS:
@@ -131,10 +151,10 @@ class OptionsBuilder:
         elif self.codec in VIDEO_CONTAINERS:
             self._build_video_with_audio_opts(opts)
 
-    def _build_audio_only_opts(self, opts: dict[str, Any]) -> None:
+    def _build_audio_only_opts(self, opts: YtDlpOptions) -> None:
         """Build options for audio-only download."""
         opts["format"] = "bestaudio/best"
-        opts["postprocessors"].append(
+        opts.setdefault("postprocessors", []).append(
             {
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": self.codec,
@@ -143,7 +163,7 @@ class OptionsBuilder:
         )
 
         if self.metadata:
-            opts["postprocessors"].extend(
+            opts.setdefault("postprocessors", []).extend(
                 [
                     {"key": "FFmpegMetadata"},
                     {"key": "EmbedThumbnail"},
@@ -152,13 +172,13 @@ class OptionsBuilder:
             opts["embedmetadata"] = True
             opts["writethumbnail"] = True
 
-    def _build_video_with_audio_opts(self, opts: dict[str, Any]) -> None:
+    def _build_video_with_audio_opts(self, opts: YtDlpOptions) -> None:
         """Build options for video download with audio."""
         audio_ext = VIDEO_CONTAINER_AUDIO_MAP[self.codec]
 
         opts["format"] = f"{self._parse_quality()}+bestaudio[ext={audio_ext}]/best"
 
-        opts["postprocessors"].append(
+        opts.setdefault("postprocessors", []).append(
             {
                 "key": "FFmpegVideoConvertor",
                 "preferedformat": self.codec,
