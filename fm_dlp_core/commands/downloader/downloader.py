@@ -6,10 +6,8 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from types import TracebackType
 from typing import final
 
-from yt_dlp import YoutubeDL
-
 from ...utils import VIDEO_CONTAINERS, echo
-from ...utils.colors import BOLD_YELLOW, RESET, info, set_colors, success
+from ...utils.colors import BOLD_YELLOW, RESET, info, set_colors, styled, success
 from .config import DownloadConfig
 from .options_builder import OptionsBuilder
 from .url_parser import URLParser
@@ -80,6 +78,7 @@ class Download:
             "reset": RESET if color else "",
             "bold_yellow": BOLD_YELLOW if color else "",
         }
+        self._YoutubeDL = None
 
     def _get_executor(self):
         """
@@ -161,11 +160,19 @@ class Download:
                 echo(info("WAV format doesn't support metadata embedding"))
 
         if not self.quiet:
-            echo(f"\n{self.c['bold_yellow']}Starting:{self.c['reset']} {url}\n")
+            echo(f"\n{styled('Starting: ', BOLD_YELLOW)} {url}\n")
 
         await asyncio.to_thread(self._sync_download, url)
 
-        return "\n" + success(url) + "\n" if not self.quiet else None
+        return f"\n{success(url)}\n" if not self.quiet else None
+
+    def _get_ytdlp(self):
+        """Lazy import yt-dlp only once."""
+        if self._YoutubeDL is None:
+            from yt_dlp import YoutubeDL
+
+            self._YoutubeDL = YoutubeDL
+        return self._YoutubeDL
 
     def _sync_download(self, url: str) -> None:
         """Synchronous download using yt-dlp (runs in thread pool)."""
@@ -183,6 +190,7 @@ class Download:
             color=self.color,
         ).build()
 
+        YoutubeDL = self._get_ytdlp()
         with YoutubeDL(options) as ydl:
             ydl.download([url])
 

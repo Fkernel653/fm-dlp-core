@@ -15,12 +15,13 @@ Constants:
 
 Functions:
     echo: Print a message to stdout or stderr with newline.
+    echo_error: Print an error message to stderr with newline.
 
 The colors submodule provides comprehensive color formatting for terminal output.
 """
 
 import sys
-from typing import TextIO, TypedDict
+from typing import TextIO
 
 from .colors import error
 
@@ -35,20 +36,6 @@ VIDEO_CONTAINER_AUDIO_MAP: dict[str, str] = {
     "avi": "mp3",
     "flv": "aac",
 }
-
-
-class DownloadParams(TypedDict, total=False):
-    """Parameters for download configuration."""
-
-    codec: str
-    kbps: int
-    quality: str
-    jobs: int
-    quiet: bool
-    metadata: bool
-    keep: bool
-    only_video: bool
-    cookies: str | None
 
 
 def echo(text: str, file: TextIO = sys.stdout) -> None:

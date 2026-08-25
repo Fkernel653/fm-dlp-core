@@ -120,68 +120,15 @@ Search functionality is built on a provider pattern, making it easy to add suppo
 
 ## 🎵 Downloading Content
 
-### Basic Usage
+### Overview
 
-```python
-import asyncio
-from fm_dlp_core import run_downloader
+The download system supports:
 
-asyncio.run(
-    run_downloader(
-        url="https://youtube.com/watch?v=VIDEO_ID",
-        codec="mp3",
-        kbps=192,
-        path="./downloads",
-    )
-)
-```
-
-### Advanced Usage with Context Manager
-
-```python
-from fm_dlp_core import Download
-
-async def download_video():
-    async with Download(
-        url="https://youtube.com/watch?v=VIDEO_ID",
-        codec="mp4",
-        quality="1080p",
-        jobs=4,
-        path="./videos",
-        metadata=True,
-        only_video=True,
-        color=True,
-    ) as downloader:
-        await downloader.download_all()
-```
-
-### Batch Downloads
-
-```python
-# Multiple URLs (comma or space separated)
-async with Download(
-    url="url1,url2,url3",  # or "url1 url2 url3"
-    codec="flac",
-    kbps=0,  # Lossless
-    jobs=3,
-) as downloader:
-    await downloader.download_all()
-
-# URLs from a text file (one per line)
-async with Download(
-    url="urls.txt",
-    codec="m4a",
-    kbps=256,
-) as downloader:
-    await downloader.download_all()
-```
-
-### Supported Codecs
-
-| Type      | Formats                                                      |
-| --------- | ------------------------------------------------------------ |
-| **Audio** | `mp3`, `aac`, `flac`, `m4a`, `opus`, `vorbis`, `wav`, `alac` |
-| **Video** | `mp4`, `mov`, `mkv`, `webm`, `avi`, `flv`                    |
+- **Audio extraction** in 8 formats (MP3, AAC, FLAC, M4A, Opus, Vorbis, WAV, ALAC)
+- **Video download** in MP4, MKV, WebM, MOV, AVI, FLV with quality selection
+- **Batch downloads** from multiple URLs or text files
+- **Concurrent downloads** with configurable job limits
+- **Metadata embedding** with thumbnails
 
 ### Download Parameters
 
@@ -202,73 +149,91 @@ async with Download(
 | `cookies`    | `str \| None` | Cookies file path or browser name                          | `None`                              |
 | `color`      | `bool`        | Enable colored output                                      | `True`                              |
 
+### Supported Codecs
+
+| Type      | Formats                                                      |
+| --------- | ------------------------------------------------------------ |
+| **Audio** | `mp3`, `aac`, `flac`, `m4a`, `opus`, `vorbis`, `wav`, `alac` |
+| **Video** | `mp4`, `mov`, `mkv`, `webm`, `avi`, `flv`                    |
+
+<details>
+<summary><b>📘 Click for examples</b></summary>
+
+**Basic Usage**
+
+```python
+import asyncio
+from fm_dlp_core import run_downloader
+
+asyncio.run(
+    run_downloader(
+        url="https://youtube.com/watch?v=VIDEO_ID",
+        codec="mp3",
+        kbps=192,
+        path="./downloads",
+    )
+)
+```
+
+---
+
+**Advanced Usage with Context Manager**
+
+```python
+from fm_dlp_core import Download
+
+async def download_video():
+    async with Download(
+        url="https://youtube.com/watch?v=VIDEO_ID",
+        codec="mp4",
+        quality="1080p",
+        jobs=4,
+        path="./videos",
+        metadata=True,
+        only_video=True,
+        color=True,
+    ) as downloader:
+        await downloader.download_all()
+```
+
+---
+
+**Batch Downloads**
+
+```python
+# Multiple URLs (comma or space separated)
+async with Download(
+    url="url1,url2,url3",  # or "url1 url2 url3"
+    codec="flac",
+    kbps=0,  # Lossless
+    jobs=3,
+) as downloader:
+    await downloader.download_all()
+
+# URLs from a text file (one per line)
+async with Download(
+    url="urls.txt",
+    codec="m4a",
+    kbps=256,
+) as downloader:
+    await downloader.download_all()
+```
+
+</details>
+
 ---
 
 ## 🔍 Searching Content
 
-### YouTube Music Search
+### Overview
 
-Search for tracks and albums on YouTube Music:
+The search system supports:
 
-```python
-from fm_dlp_core import search
-
-# Search for tracks
-for result in search(
-    query="Sewerslvt",
-    limit=5,
-    yt_video=False,   # Use YouTube Music
-    album=False,      # Search for tracks
-    color=True,
-):
-    print(result)
-
-# Search for albums
-for result in search(
-    query="Draining Love Story",
-    limit=3,
-    yt_video=False,
-    album=True,       # Search for albums
-):
-    print(result)
-```
-
-### YouTube Video Search
-
-Search for videos on YouTube:
-
-```python
-# Search YouTube videos
-for result in search(
-    query="Python tutorial",
-    limit=5,
-    yt_video=True,    # Use YouTube (videos)
-    album=False,
-):
-    print(result)
-```
-
-### Output Modes
-
-| Mode          | Parameter                   | Description                            |
-| ------------- | --------------------------- | -------------------------------------- |
-| **Formatted** | `raw=False, only_url=False` | Beautiful colored output with metadata |
-| **URL-Only**  | `only_url=True`             | Just the URLs (great for piping)       |
-| **Raw Data**  | `raw=True`                  | Python dictionaries with full metadata |
-
-```python
-# Get only URLs
-urls = list(search("breakcore", limit=10, only_url=True))
-
-# Get raw data
-for data in search("Goreshit", limit=2, raw=True):
-    print(data["title"], data["url"])
-
-# Chain search → download
-urls = list(search("chill beats", limit=5, only_url=True))
-if urls:
-    asyncio.run(run_downloader(url=" ".join(urls), codec="mp3", kbps=320))
-```
+- **YouTube Music** — Search for tracks and albums
+- **YouTube** — Search for videos
+- **Formatted output** with colors and structured display
+- **Raw data** for programmatic use
+- **URL-only** output for easy piping to downloads
 
 ### Search Parameters
 
@@ -282,13 +247,110 @@ if urls:
 | `only_url` | `bool` | Output only URLs                                 |
 | `color`    | `bool` | Enable colored output                            |
 
+### Output Modes
+
+| Mode          | Parameter                   | Description                            |
+| ------------- | --------------------------- | -------------------------------------- |
+| **Formatted** | `raw=False, only_url=False` | Beautiful colored output with metadata |
+| **URL-Only**  | `only_url=True`             | Just the URLs (great for piping)       |
+| **Raw Data**  | `raw=True`                  | Python dictionaries with full metadata |
+
+<details>
+<summary><b>📘 Click for examples</b></summary>
+
+**YouTube Music Search (Tracks)**
+
+```python
+from fm_dlp_core import search
+
+for result in search(
+    query="Sewerslvt",
+    limit=5,
+    yt_video=False,   # Use YouTube Music
+    album=False,      # Search for tracks
+    color=True,
+):
+    print(result)
+```
+
+---
+
+**YouTube Music Search (Albums)**
+
+```python
+for result in search(
+    query="Draining Love Story",
+    limit=3,
+    yt_video=False,
+    album=True,       # Search for albums
+):
+    print(result)
+```
+
+---
+
+**YouTube Video Search**
+
+```python
+for result in search(
+    query="Python tutorial",
+    limit=5,
+    yt_video=True,    # Use YouTube (videos)
+    album=False,
+):
+    print(result)
+```
+
+---
+
+**URL-Only Output**
+
+```python
+# Get only URLs
+urls = list(search("breakcore", limit=10, only_url=True))
+
+# Chain search → download
+urls = list(search("chill beats", limit=5, only_url=True))
+if urls:
+    asyncio.run(run_downloader(url=" ".join(urls), codec="mp3", kbps=320))
+```
+
+---
+
+**Raw Data Output**
+
+```python
+for data in search("Goreshit", limit=2, raw=True):
+    print(data["title"], data["url"])
+```
+
+</details>
+
 ---
 
 ## ⚙️ Configuration
 
-### Persistent Download Parameters
+### Overview
 
-Save your preferred settings to reuse them later:
+The configuration system provides:
+
+- **Persistent parameters** — Save download settings across sessions
+- **Download path** — Set default download directory
+- **TOML format** — Human-readable config file
+- **Cookie support** — Browser cookies for restricted content
+
+### Configuration File Location
+
+| Platform    | Path                                               |
+| ----------- | -------------------------------------------------- |
+| **Windows** | `%LOCALAPPDATA%\fm-dlp\config.toml`                |
+| **macOS**   | `~/Library/Application Support/fm-dlp/config.toml` |
+| **Linux**   | `~/.config/fm-dlp/config.toml`                     |
+
+<details>
+<summary><b>📘 Click for examples</b></summary>
+
+**Save Download Parameters**
 
 ```python
 from fm_dlp_core.utils.config.parametrs import set_parameters, get_parameters
@@ -312,9 +374,9 @@ params = get_parameters()
 print(params)  # {'codec': 'mp3', 'kbps': 256, ...}
 ```
 
-### Download Path
+---
 
-Set and get the default download directory:
+**Set Download Path**
 
 ```python
 from fm_dlp_core.utils.config.path import set_path, get_path
@@ -328,17 +390,11 @@ path = get_path()
 print(f"Downloads will be saved to: {path}")
 ```
 
-### Configuration File Location
+---
 
-| Platform    | Path                                               |
-| ----------- | -------------------------------------------------- |
-| **Windows** | `%LOCALAPPDATA%\fm-dlp\config.toml`                |
-| **macOS**   | `~/Library/Application Support/fm-dlp/config.toml` |
-| **Linux**   | `~/.config/fm-dlp/config.toml`                     |
+**Configuration File Examples**
 
-### Configuration Structure
-
-#### without cookies:
+Without cookies:
 
 ```toml
 path = "/home/user/folder"
@@ -354,7 +410,7 @@ keep = false
 only_video = false
 ```
 
-#### with cookies:
+With cookies:
 
 ```toml
 path = "/home/user/folder"
@@ -371,11 +427,14 @@ only_video = false
 cookies = "firefox"
 ```
 
+</details>
+
 ---
 
 ## 🔧 Advanced Topics
 
-### Custom Search Providers
+<details>
+<summary><b>Custom Search Providers</b></summary>
 
 Create your own search provider by subclassing `BaseProvider`:
 
@@ -410,7 +469,10 @@ for result in provider.search(query="lo-fi", limit=5, is_track=True):
     print(result)
 ```
 
-### Building Custom yt-dlp Options
+</details>
+
+<details>
+<summary><b>Custom yt-dlp Options</b></summary>
 
 For advanced use cases, you can build custom yt-dlp options:
 
@@ -441,7 +503,10 @@ with YoutubeDL(opts) as ydl:
     ydl.download(["https://youtube.com/watch?v=..."])
 ```
 
-### Cookie Authentication
+</details>
+
+<details>
+<summary><b>Cookie Authentication</b></summary>
 
 For private or age-restricted content:
 
@@ -466,6 +531,8 @@ asyncio.run(
     )
 )
 ```
+
+</details>
 
 ---
 
@@ -513,7 +580,8 @@ asyncio.run(
 
 ## 💡 Examples
 
-### Example 1: Download a Music Playlist
+<details>
+<summary><b>Example 1: Download a Music Playlist</b></summary>
 
 ```python
 import asyncio
@@ -533,7 +601,10 @@ async def download_playlist(playlist_url: str):
 asyncio.run(download_playlist("https://music.youtube.com/playlist?list=..."))
 ```
 
-### Example 2: Search and Download Top Tracks
+</details>
+
+<details>
+<summary><b>Example 2: Search and Download Top Tracks</b></summary>
 
 ```python
 import asyncio
@@ -556,7 +627,10 @@ async def download_artist(artist: str):
 asyncio.run(download_artist("Porter Robinson"))
 ```
 
-### Example 3: Custom Download with Progress Callback
+</details>
+
+<details>
+<summary><b>Example 3: Custom Download with Progress Callback</b></summary>
 
 ```python
 import asyncio
@@ -578,7 +652,10 @@ async def main():
         await downloader.download_all()
 ```
 
-### Example 4: Working with Raw Search Data
+</details>
+
+<details>
+<summary><b>Example 4: Working with Raw Search Data</b></summary>
 
 ```python
 from fm_dlp_core import search
@@ -598,7 +675,10 @@ for result in search(
     print("-" * 40)
 ```
 
-### Example 5: Error Handling
+</details>
+
+<details>
+<summary><b>Example 5: Error Handling</b></summary>
 
 ```python
 import asyncio
@@ -617,6 +697,8 @@ async def safe_download(url: str):
 
 asyncio.run(safe_download("https://youtube.com/watch?v=invalid_id"))
 ```
+
+</details>
 
 ---
 

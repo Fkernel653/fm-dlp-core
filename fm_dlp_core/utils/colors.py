@@ -27,20 +27,19 @@ Example:
     >>> print(error("Failed to download"))
 """
 
-RESET = "\033[0m"
+RESET: str = "\033[0m"
 
-BOLD_WHITE = "\033[37m"
+BOLD_WHITE: str = "\033[37m"
+GRAY: str = "\033[90m"
 
-GRAY = "\033[90m"
+WHITE: str = "\033[0;37m"
 
-WHITE = "\033[0;37m"
+BOLD_RED: str = "\033[1;31m"
+BOLD_GREEN: str = "\033[1;32m"
+BOLD_YELLOW: str = "\033[1;33m"
+BOLD_CYAN: str = "\033[1;36m"
 
-BOLD_RED = "\033[1;31m"
-BOLD_GREEN = "\033[1;32m"
-BOLD_YELLOW = "\033[1;33m"
-BOLD_CYAN = "\033[1;36m"
-
-colors_enabled = True
+colors_enabled: bool = True
 
 
 def set_colors(enabled: bool):

@@ -1,11 +1,8 @@
 """Result formatting utilities for search results."""
 
-from typing import final
-
 from ...utils.colors import BOLD_CYAN, BOLD_RED, BOLD_WHITE, GRAY, RESET, WHITE
 
 
-@final
 class ResultFormatter:
     """Format search results with optional metadata and colors."""
 

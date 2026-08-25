@@ -18,7 +18,7 @@ Functions:
     load_config: Load configuration from the TOML file with caching.
 
 Constants:
-    ENCODING: Encoding for writing / reading files
+    ENCODING: ENCODING for writing / reading files
     CONFIG_DIR: The resolved configuration directory path.
     CONFIG_FILE: The full path to the config.toml file.
 
@@ -76,8 +76,8 @@ def get_config_dir(dir_name: str = "fm-dlp") -> str:
     return str(d / dir_name)
 
 
-CONFIG_DIR = get_config_dir()
-CONFIG_FILE = Path(CONFIG_DIR) / "config.toml"
+CONFIG_DIR: str = get_config_dir()
+CONFIG_FILE: Path = Path(CONFIG_DIR) / "config.toml"
 
 
 def _toml_dumps(data: dict[str, Any]) -> str:

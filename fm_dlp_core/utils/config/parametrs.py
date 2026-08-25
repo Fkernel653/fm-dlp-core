@@ -1,4 +1,6 @@
-from ...utils import DownloadParams, echo, echo_error
+from typing import Any
+
+from ...utils import echo, echo_error
 from ..colors import set_colors, success
 from . import CONFIG_FILE, load_config, update_config
 
@@ -97,7 +99,7 @@ def set_parameters(
         return False
 
 
-def get_parameters(color: bool = True) -> DownloadParams:
+def get_parameters(color: bool = True) -> dict[str, Any]:
     """
     Retrieve saved download parameters from the configuration file.
 

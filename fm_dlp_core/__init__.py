@@ -33,7 +33,7 @@ Exported Symbols:
     echo                       - Terminal output with color support
 
 Requirements:
-    - Python 3.10+ with asyncio support
+    - Python 3.11+ with tomllib support
     - ffmpeg for audio/video processing (required for conversion)
 
 For more information, visit: https://github.com/Fkernel653/fm-dlp-core

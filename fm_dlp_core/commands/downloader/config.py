@@ -1,8 +1,7 @@
 """Configuration handling for downloader."""
 
-from typing import final
+from typing import Any, final
 
-from ...utils import DownloadParams
 from ...utils.config.parametrs import get_parameters, set_parameters
 
 
@@ -42,7 +41,7 @@ class DownloadConfig:
         self.cookies = cookies
         self.color = color
 
-    def apply_config(self) -> DownloadParams:
+    def apply_config(self) -> dict[str, Any]:
         """
         Apply saved configuration settings if requested and return parameters dict.
 
