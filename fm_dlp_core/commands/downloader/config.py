@@ -2,6 +2,7 @@
 
 from typing import Any, final
 
+from ...utils import validate_remote
 from ...utils.config.parametrs import get_parameters, set_parameters
 
 
@@ -24,6 +25,7 @@ class DownloadConfig:
         path: str,
         only_video: bool,
         cookies: str | None,
+        remote: str | None,
         color: bool,
     ):
         self.url = url
@@ -39,6 +41,8 @@ class DownloadConfig:
         self.path = path
         self.only_video = only_video
         self.cookies = cookies
+        _ = validate_remote(remote)
+        self.remote = remote
         self.color = color
 
     def apply_config(self) -> dict[str, Any]:
@@ -53,7 +57,7 @@ class DownloadConfig:
         Returns:
             dict[str, Any]: A dictionary containing the final parameters to be used
                 for downloading. Keys include: codec, kbps, quality, jobs, quiet,
-                metadata, keep, only_video, and cookies.
+                metadata, keep, only_video, cookies and remote.
         """
         if self.use_config:
             params = get_parameters(self.color)
@@ -67,6 +71,7 @@ class DownloadConfig:
                 "keep": params.get("keep", self.keep),
                 "only_video": params.get("only_video", self.only_video),
                 "cookies": params.get("cookies", self.cookies),
+                "remote": params.get("remote", self.remote),
             }
         return {
             "codec": self.codec,
@@ -78,6 +83,7 @@ class DownloadConfig:
             "keep": self.keep,
             "only_video": self.only_video,
             "cookies": self.cookies,
+            "remote": self.remote,
         }
 
     def save_config(self) -> bool:
@@ -104,6 +110,7 @@ class DownloadConfig:
                 self.keep,
                 self.only_video,
                 self.cookies,
+                self.remote,
                 self.color,
             )
         return True

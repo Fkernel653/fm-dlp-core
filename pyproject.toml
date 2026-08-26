@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fm-dlp-core"
-version = "0.1.7"
+version = "0.1.8"
 description = "Core package for YouTube audio/video downloading and searching."
 readme = "README.md"
 requires-python = ">=3.11"

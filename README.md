@@ -132,22 +132,23 @@ The download system supports:
 
 ### Download Parameters
 
-| Parameter    | Type          | Description                                                | Default                             |
-| ------------ | ------------- | ---------------------------------------------------------- | ----------------------------------- |
-| `url`        | `str`         | URL(s) to download (comma/space separated or path to file) | **Required**                        |
-| `codec`      | `str`         | Output format (see Supported Codecs)                       | `"m4a"` (macOS) / `"opus"` (others) |
-| `kbps`       | `int`         | Audio bitrate in kbps                                      | `192`                               |
-| `quality`    | `str`         | Video quality (`best`, `worst`, `1080p`, `720p`, etc.)     | `"best"`                            |
-| `jobs`       | `int`         | Number of concurrent downloads                             | `4`                                 |
-| `quiet`      | `bool`        | Suppress output messages                                   | `False`                             |
-| `metadata`   | `bool`        | Embed metadata and thumbnail                               | `True`                              |
-| `keep`       | `bool`        | Keep original downloaded file                              | `False`                             |
-| `save`       | `bool`        | Save parameters to config                                  | `False`                             |
-| `use_config` | `bool`        | Load parameters from config                                | `False`                             |
-| `path`       | `str`         | Download directory                                         | Current directory                   |
-| `only_video` | `bool`        | Download video only (skip audio extraction)                | `False`                             |
-| `cookies`    | `str \| None` | Cookies file path or browser name                          | `None`                              |
-| `color`      | `bool`        | Enable colored output                                      | `True`                              |
+| Parameter    | Type          | Description                                                                                                                                        |
+| ------------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`        | `str`         | URL(s) to download (comma/space separated or path to file)                                                                                         |
+| `codec`      | `str`         | Output format (see Supported Codecs)                                                                                                               |
+| `kbps`       | `int`         | Audio bitrate in kbps                                                                                                                              |
+| `quality`    | `str`         | Video quality (`best`, `worst`, `1080p`, `720p`, etc.)                                                                                             |
+| `jobs`       | `int`         | Number of concurrent downloads                                                                                                                     |
+| `quiet`      | `bool`        | Suppress output messages                                                                                                                           |
+| `metadata`   | `bool`        | Embed metadata and thumbnail                                                                                                                       |
+| `keep`       | `bool`        | Keep original downloaded file                                                                                                                      |
+| `save`       | `bool`        | Save parameters to config                                                                                                                          |
+| `use_config` | `bool`        | Load parameters from config                                                                                                                        |
+| `path`       | `str`         | Download directory                                                                                                                                 |
+| `only_video` | `bool`        | Download video only (skip audio extraction)                                                                                                        |
+| `cookies`    | `str \| None` | Cookies file path or browser name                                                                                                                  |
+| `remote`     | `str \| None` | External JavaScript components source for bypassing anti-bot protections. Valid values: `"ejs:github"` (yt-dlp repo) or `"ejs:npm"` (NPM registry) |
+| `color`      | `bool`        | Enable colored output                                                                                                                              |
 
 ### Supported Codecs
 
@@ -191,6 +192,7 @@ async def download_video():
         path="./videos",
         metadata=True,
         only_video=True,
+        remote = "ejs:github",
         color=True,
     ) as downloader:
         await downloader.download_all()
@@ -366,6 +368,7 @@ set_parameters(
     keep=False,
     only_video=False,
     cookies="chrome",  # Use browser cookies
+    remote="ejs:github",
     color=True,
 )
 
@@ -394,24 +397,6 @@ print(f"Downloads will be saved to: {path}")
 
 **Configuration File Examples**
 
-Without cookies:
-
-```toml
-path = "/home/user/folder"
-
-[parameters]
-codec = "opus"
-kbps = 256
-quality = "best"
-jobs = 5
-quiet = false
-metadata = true
-keep = false
-only_video = false
-```
-
-With cookies:
-
 ```toml
 path = "/home/user/folder"
 
@@ -425,6 +410,7 @@ metadata = true
 keep = false
 only_video = false
 cookies = "firefox"
+remote = "ejs:github"
 ```
 
 </details>

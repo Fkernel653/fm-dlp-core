@@ -181,4 +181,4 @@ class ResultFormatter:
         Returns:
             str: A formatted error string with color codes if enabled.
         """
-        return f"\n{BOLD_RED}{self.error_prefix}{RESET}{error}\n"
+        return self._c["bold_red"] + self.error_prefix + self._c["reset"] + error

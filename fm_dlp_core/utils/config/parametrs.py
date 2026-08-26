@@ -1,6 +1,6 @@
 from typing import Any
 
-from ...utils import echo, echo_error
+from ...utils import echo, echo_error, validate_remote
 from ..colors import set_colors, success
 from . import CONFIG_FILE, load_config, update_config
 
@@ -32,6 +32,7 @@ def set_parameters(
     keep: bool,
     only_video: bool,
     cookies: str | None,
+    remote: str | None,
     color: bool = True,
 ) -> bool:
     """
@@ -54,6 +55,9 @@ def set_parameters(
         keep (bool): Keep the original downloaded file after conversion.
         only_video (bool): Download video stream only (no audio).
         cookies (str | None): Path to cookies file or browser name for authentication.
+        remote (str | None): External JavaScript components source for bypassing anti-bot protections.
+                                 Valid values: "ejs:github", "ejs:npm", or ""/None to disable.
+                                 Saved to config and auto-applied to future downloads.
         color (bool): Enable colored output in success/error messages. (default: True)
 
     Returns:
@@ -78,6 +82,10 @@ def set_parameters(
 
         if cookies:
             params["cookies"] = cookies
+
+        if remote:
+            _ = validate_remote(remote)
+            params["remote"] = remote
 
         config[PARAM_KEY] = params
 

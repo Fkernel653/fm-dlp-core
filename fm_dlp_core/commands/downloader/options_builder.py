@@ -3,7 +3,11 @@
 from pathlib import Path
 from typing import Any, final
 
-from ...utils import AUDIO_CODECS, VIDEO_CONTAINER_AUDIO_MAP, VIDEO_CONTAINERS
+from ...utils import (
+    AUDIO_CODECS,
+    VIDEO_CONTAINER_AUDIO_MAP,
+    VIDEO_CONTAINERS,
+)
 
 
 @final
@@ -22,6 +26,7 @@ class OptionsBuilder:
         only_video: bool,
         cookies: str | None,
         path: str,
+        remote: str | None,
         color: bool,
     ):
         self.codec = codec
@@ -34,6 +39,7 @@ class OptionsBuilder:
         self.only_video = only_video
         self.cookies = cookies
         self.path = path
+        self.remote = remote
         self.color = color
 
     def _parse_quality(self) -> str:
@@ -90,6 +96,9 @@ class OptionsBuilder:
             "postprocessors": [],
             "keepvideo": self.keep,
         }
+
+        if self.remote:
+            base_opts["remote"] = [self.remote]
 
         if not self.color:
             base_opts["color"] = "never"

@@ -7,7 +7,7 @@ from types import TracebackType
 from typing import final
 
 from ...utils import VIDEO_CONTAINERS, echo
-from ...utils.colors import BOLD_YELLOW, RESET, info, set_colors, styled, success
+from ...utils.colors import BOLD_YELLOW, info, set_colors, styled, success
 from .config import DownloadConfig
 from .options_builder import OptionsBuilder
 from .url_parser import URLParser
@@ -32,6 +32,7 @@ class Download:
         path: str,
         only_video: bool,
         cookies: str | None,
+        remote: str | None,
         color: bool,
     ):
         """Initialize downloader with configuration."""
@@ -49,6 +50,7 @@ class Download:
             path=path,
             only_video=only_video,
             cookies=cookies,
+            remote=remote,
             color=color,
         )
 
@@ -63,6 +65,7 @@ class Download:
         self.keep: bool = params["keep"]
         self.only_video: bool = params["only_video"]
         self.cookies: str = params["cookies"]
+        self.remote: str = params["remote"]
 
         if not self.config.save_config():
             return
@@ -73,11 +76,6 @@ class Download:
         self._url_list = URLParser(url, quiet).parse()
 
         set_colors(color)
-
-        self.c = {
-            "reset": RESET if color else "",
-            "bold_yellow": BOLD_YELLOW if color else "",
-        }
         self._YoutubeDL = None
 
     def _get_executor(self):
@@ -160,11 +158,11 @@ class Download:
                 echo(info("WAV format doesn't support metadata embedding"))
 
         if not self.quiet:
-            echo(f"\n{styled('Starting: ', BOLD_YELLOW)} {url}\n")
+            echo("\n" + styled("Starting: ", BOLD_YELLOW) + url)
 
         await asyncio.to_thread(self._sync_download, url)
 
-        return f"\n{success(url)}\n" if not self.quiet else None
+        return success(url) if not self.quiet else None
 
     def _get_ytdlp(self):
         """Lazy import yt-dlp only once."""
@@ -187,6 +185,7 @@ class Download:
             only_video=self.only_video,
             cookies=self.cookies,
             path=self.path,
+            remote=self.remote,
             color=self.color,
         ).build()
 
@@ -209,6 +208,7 @@ async def run_downloader(
     path: str,
     only_video: bool,
     cookies: str | None,
+    remote: str,
     color: bool,
 ) -> None:
     """Run downloader with given parameters."""
@@ -227,6 +227,7 @@ async def run_downloader(
         path=path,
         only_video=only_video,
         cookies=cookies,
+        remote=remote,
         color=color,
     ) as dl:
         try:

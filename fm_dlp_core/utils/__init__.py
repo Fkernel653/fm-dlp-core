@@ -25,6 +25,7 @@ from typing import TextIO
 
 from .colors import error
 
+VALID_REMOTE_SOURCES = ("ejs:github", "ejs:npm", None)
 AUDIO_CODECS: set[str] = {"mp3", "aac", "flac", "m4a", "opus", "vorbis", "wav", "alac"}
 VIDEO_CONTAINERS: set[str] = {"mp4", "mov", "mkv", "webm", "avi", "flv"}
 ALL_CODECS: set[str] = AUDIO_CODECS | VIDEO_CONTAINERS
@@ -56,3 +57,10 @@ def echo_error(text: str) -> None:
     """
     echo(error(text), file=sys.stderr)
     sys.exit(1)
+
+
+def validate_remote(remote: str | None) -> None:
+    if remote not in VALID_REMOTE_SOURCES:
+        echo_error(
+            f"Invalid remote value: '{remote}'.\nMust be one of: {', '.join(str(v) for v in VALID_REMOTE_SOURCES)}"
+        )
