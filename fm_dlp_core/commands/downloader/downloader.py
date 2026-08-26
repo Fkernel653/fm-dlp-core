@@ -10,6 +10,7 @@ from ...utils import VIDEO_CONTAINERS, echo
 from ...utils.colors import BOLD_YELLOW, info, set_colors, styled, success
 from .config import DownloadConfig
 from .options_builder import OptionsBuilder
+from .params import DownloadParams
 from .url_parser import URLParser
 
 
@@ -17,65 +18,31 @@ from .url_parser import URLParser
 class Download:
     """Async YouTube audio/video downloader."""
 
-    def __init__(
-        self,
-        url: str,
-        codec: str,
-        kbps: int,
-        quality: str,
-        jobs: int,
-        quiet: bool,
-        metadata: bool,
-        keep: bool,
-        save: bool,
-        use_config: bool,
-        path: str,
-        only_video: bool,
-        cookies: str | None,
-        remote: str | None,
-        color: bool,
-    ):
+    def __init__(self, params: DownloadParams):
         """Initialize downloader with configuration."""
-        self.config = DownloadConfig(
-            url=url,
-            codec=codec,
-            kbps=kbps,
-            quality=quality,
-            jobs=jobs,
-            quiet=quiet,
-            metadata=metadata,
-            keep=keep,
-            save=save,
-            use_config=use_config,
-            path=path,
-            only_video=only_video,
-            cookies=cookies,
-            remote=remote,
-            color=color,
-        )
+        self.params = params
+        self.config = DownloadConfig(params)
 
-        params = self.config.apply_config()
+        applied = self.config.apply_config()
 
-        self.codec: str = params["codec"]
-        self.kbps: int = params["kbps"]
-        self.quality: str = params["quality"]
-        self.jobs: int = params["jobs"]
-        self.quiet: bool = params["quiet"]
-        self.metadata: bool = params["metadata"]
-        self.keep: bool = params["keep"]
-        self.only_video: bool = params["only_video"]
-        self.cookies: str = params["cookies"]
-        self.remote: str = params["remote"]
+        self.codec: str = applied["codec"]
+        self.kbps: int = applied["kbps"]
+        self.quality: str = applied["quality"]
+        self.jobs: int = applied["jobs"]
+        self.quiet: bool = applied["quiet"]
+        self.metadata: bool = applied["metadata"]
+        self.keep: bool = applied["keep"]
+        self.only_video: bool = applied["only_video"]
+        self.cookies: str = applied["cookies"]
+        self.remote: str = applied["remote"]
 
         if not self.config.save_config():
             return
 
-        self.path = path
-        self.color = color
         self._executor = self._get_executor()
-        self._url_list = URLParser(url, quiet).parse()
+        self._url_list = URLParser(params.url, params.quiet).parse()
 
-        set_colors(color)
+        set_colors(params.color)
         self._YoutubeDL = None
 
     def _get_executor(self):
@@ -174,20 +141,7 @@ class Download:
 
     def _sync_download(self, url: str) -> None:
         """Synchronous download using yt-dlp (runs in thread pool)."""
-        options = OptionsBuilder(
-            codec=self.codec,
-            kbps=self.kbps,
-            quality=self.quality,
-            jobs=self.jobs,
-            quiet=self.quiet,
-            metadata=self.metadata,
-            keep=self.keep,
-            only_video=self.only_video,
-            cookies=self.cookies,
-            path=self.path,
-            remote=self.remote,
-            color=self.color,
-        ).build()
+        options = OptionsBuilder(self.params).build()
 
         YoutubeDL = self._get_ytdlp()
         with YoutubeDL(options) as ydl:
@@ -213,7 +167,7 @@ async def run_downloader(
 ) -> None:
     """Run downloader with given parameters."""
 
-    async with Download(
+    params = DownloadParams(
         url=url,
         codec=codec,
         kbps=kbps,
@@ -229,7 +183,9 @@ async def run_downloader(
         cookies=cookies,
         remote=remote,
         color=color,
-    ) as dl:
+    )
+
+    async with Download(params) as dl:
         try:
             await dl.download_all()
         except Exception:

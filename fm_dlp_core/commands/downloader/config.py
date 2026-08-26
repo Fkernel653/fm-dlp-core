@@ -4,46 +4,16 @@ from typing import Any, final
 
 from ...utils import validate_remote
 from ...utils.config.parametrs import get_parameters, set_parameters
+from .params import DownloadParams
 
 
 @final
 class DownloadConfig:
     """Configuration container for download settings."""
 
-    def __init__(
-        self,
-        url: str,
-        codec: str,
-        kbps: int,
-        quality: str,
-        jobs: int,
-        quiet: bool,
-        metadata: bool,
-        keep: bool,
-        save: bool,
-        use_config: bool,
-        path: str,
-        only_video: bool,
-        cookies: str | None,
-        remote: str | None,
-        color: bool,
-    ):
-        self.url = url
-        self.codec = codec
-        self.kbps = kbps
-        self.quality = quality
-        self.jobs = jobs
-        self.quiet = quiet
-        self.metadata = metadata
-        self.keep = keep
-        self.save = save
-        self.use_config = use_config
-        self.path = path
-        self.only_video = only_video
-        self.cookies = cookies
-        _ = validate_remote(remote)
-        self.remote = remote
-        self.color = color
+    def __init__(self, params: DownloadParams):
+        self.params = params
+        _ = validate_remote(params.remote)
 
     def apply_config(self) -> dict[str, Any]:
         """
@@ -59,31 +29,31 @@ class DownloadConfig:
                 for downloading. Keys include: codec, kbps, quality, jobs, quiet,
                 metadata, keep, only_video, cookies and remote.
         """
-        if self.use_config:
-            params = get_parameters(self.color)
+        if self.params.use_config:
+            saved = get_parameters(self.params.color)
             return {
-                "codec": params.get("codec", self.codec),
-                "kbps": params.get("kbps", self.kbps),
-                "quality": params.get("quality", self.quality),
-                "jobs": params.get("jobs", self.jobs),
-                "quiet": params.get("quiet", self.quiet),
-                "metadata": params.get("metadata", self.metadata),
-                "keep": params.get("keep", self.keep),
-                "only_video": params.get("only_video", self.only_video),
-                "cookies": params.get("cookies", self.cookies),
-                "remote": params.get("remote", self.remote),
+                "codec": saved.get("codec", self.params.codec),
+                "kbps": saved.get("kbps", self.params.kbps),
+                "quality": saved.get("quality", self.params.quality),
+                "jobs": saved.get("jobs", self.params.jobs),
+                "quiet": saved.get("quiet", self.params.quiet),
+                "metadata": saved.get("metadata", self.params.metadata),
+                "keep": saved.get("keep", self.params.keep),
+                "only_video": saved.get("only_video", self.params.only_video),
+                "cookies": saved.get("cookies", self.params.cookies),
+                "remote": saved.get("remote", self.params.remote),
             }
         return {
-            "codec": self.codec,
-            "kbps": self.kbps,
-            "quality": self.quality,
-            "jobs": self.jobs,
-            "quiet": self.quiet,
-            "metadata": self.metadata,
-            "keep": self.keep,
-            "only_video": self.only_video,
-            "cookies": self.cookies,
-            "remote": self.remote,
+            "codec": self.params.codec,
+            "kbps": self.params.kbps,
+            "quality": self.params.quality,
+            "jobs": self.params.jobs,
+            "quiet": self.params.quiet,
+            "metadata": self.params.metadata,
+            "keep": self.params.keep,
+            "only_video": self.params.only_video,
+            "cookies": self.params.cookies,
+            "remote": self.params.remote,
         }
 
     def save_config(self) -> bool:
@@ -99,18 +69,18 @@ class DownloadConfig:
             bool: True if configuration was saved successfully or if `save` is False
                 (no operation needed), False if an error occurred during saving.
         """
-        if self.save:
+        if self.params.save:
             return set_parameters(
-                self.codec,
-                self.kbps,
-                self.quality,
-                self.jobs,
-                self.quiet,
-                self.metadata,
-                self.keep,
-                self.only_video,
-                self.cookies,
-                self.remote,
-                self.color,
+                self.params.codec,
+                self.params.kbps,
+                self.params.quality,
+                self.params.jobs,
+                self.params.quiet,
+                self.params.metadata,
+                self.params.keep,
+                self.params.only_video,
+                self.params.cookies,
+                self.params.remote,
+                self.params.color,
             )
         return True

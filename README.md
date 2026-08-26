@@ -130,25 +130,51 @@ The download system supports:
 - **Concurrent downloads** with configurable job limits
 - **Metadata embedding** with thumbnails
 
-### Download Parameters
+### DownloadParams Class
+
+All download parameters are encapsulated in the `DownloadParams` dataclass:
+
+```python
+from fm_dlp_core.commands.downloader.params import DownloadParams
+
+params = DownloadParams(
+    url="https://youtube.com/watch?v=...",
+    codec="mp3",
+    kbps=320,
+    quality="best",
+    jobs=4,
+    quiet=False,
+    metadata=True,
+    keep=False,
+    save=False,
+    use_config=False,
+    path="./downloads",
+    only_video=False,
+    cookies="chrome",
+    remote="ejs:github",
+    color=True,
+)
+```
+
+### Download Parameters Reference
 
 | Parameter    | Type          | Description                                                                                                                                        |
 | ------------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `url`        | `str`         | URL(s) to download (comma/space separated or path to file)                                                                                         |
 | `codec`      | `str`         | Output format (see Supported Codecs)                                                                                                               |
-| `kbps`       | `int`         | Audio bitrate in kbps                                                                                                                              |
-| `quality`    | `str`         | Video quality (`best`, `worst`, `1080p`, `720p`, etc.)                                                                                             |
-| `jobs`       | `int`         | Number of concurrent downloads                                                                                                                     |
+| `kbps`       | `int`         | Audio bitrate in kbps. Use `0` for lossless formats (FLAC, WAV, ALAC)                                                                              |
+| `quality`    | `str`         | Video quality: `"best"`, `"worst"`, `"1080"`, `"1080p"`, or custom format filter                                                                   |
+| `jobs`       | `int`         | Number of concurrent downloads (also controls thread/process pool size)                                                                            |
 | `quiet`      | `bool`        | Suppress output messages                                                                                                                           |
-| `metadata`   | `bool`        | Embed metadata and thumbnail                                                                                                                       |
-| `keep`       | `bool`        | Keep original downloaded file                                                                                                                      |
-| `save`       | `bool`        | Save parameters to config                                                                                                                          |
-| `use_config` | `bool`        | Load parameters from config                                                                                                                        |
+| `metadata`   | `bool`        | Embed metadata and thumbnail. **Note:** Automatically disabled for WAV format (not supported)                                                      |
+| `keep`       | `bool`        | Keep original downloaded file (video file when extracting audio)                                                                                   |
+| `save`       | `bool`        | Save parameters to config (requires `color` parameter for config key)                                                                              |
+| `use_config` | `bool`        | Load parameters from config. Saved values take priority over instance values. Config key uses the `color` parameter value                          |
 | `path`       | `str`         | Download directory                                                                                                                                 |
-| `only_video` | `bool`        | Download video only (skip audio extraction)                                                                                                        |
-| `cookies`    | `str \| None` | Cookies file path or browser name                                                                                                                  |
+| `only_video` | `bool`        | Download video only (skip audio extraction). Uses `ProcessPoolExecutor` for video processing                                                       |
+| `cookies`    | `str \| None` | Cookies file path or browser name (`"chrome"`, `"firefox"`, `"edge"`, `"opera"`). Uses cookiefile if path exists, otherwise cookiesfrombrowser     |
 | `remote`     | `str \| None` | External JavaScript components source for bypassing anti-bot protections. Valid values: `"ejs:github"` (yt-dlp repo) or `"ejs:npm"` (NPM registry) |
-| `color`      | `bool`        | Enable colored output                                                                                                                              |
+| `color`      | `bool`        | Enable colored output. Also used as the configuration key identifier for storing/retrieving settings                                               |
 
 ### Supported Codecs
 
@@ -157,10 +183,19 @@ The download system supports:
 | **Audio** | `mp3`, `aac`, `flac`, `m4a`, `opus`, `vorbis`, `wav`, `alac` |
 | **Video** | `mp4`, `mov`, `mkv`, `webm`, `avi`, `flv`                    |
 
+### Executor Selection
+
+The downloader automatically selects the appropriate executor type:
+
+- **ProcessPoolExecutor** — Used for video downloads and container formats (MP4, MKV, etc.) that benefit from CPU parallelism for transcoding
+- **ThreadPoolExecutor** — Used for audio downloads (MP3, M4A, etc.) which are typically I/O-bound and work better with threading
+
+This optimization is handled automatically based on the `only_video` flag and `codec` selection.
+
 <details>
 <summary><b>📘 Click for examples</b></summary>
 
-**Basic Usage**
+**Basic Usage with run_downloader**
 
 ```python
 import asyncio
@@ -178,13 +213,14 @@ asyncio.run(
 
 ---
 
-**Advanced Usage with Context Manager**
+**Advanced Usage with Download Class**
 
 ```python
 from fm_dlp_core import Download
+from fm_dlp_core.commands.downloader.params import DownloadParams
 
 async def download_video():
-    async with Download(
+    params = DownloadParams(
         url="https://youtube.com/watch?v=VIDEO_ID",
         codec="mp4",
         quality="1080p",
@@ -192,9 +228,11 @@ async def download_video():
         path="./videos",
         metadata=True,
         only_video=True,
-        remote = "ejs:github",
+        remote="ejs:github",
         color=True,
-    ) as downloader:
+    )
+
+    async with Download(params) as downloader:
         await downloader.download_all()
 ```
 
@@ -203,22 +241,60 @@ async def download_video():
 **Batch Downloads**
 
 ```python
+from fm_dlp_core import Download
+from fm_dlp_core.commands.downloader.params import DownloadParams
+
 # Multiple URLs (comma or space separated)
-async with Download(
+params = DownloadParams(
     url="url1,url2,url3",  # or "url1 url2 url3"
     codec="flac",
     kbps=0,  # Lossless
     jobs=3,
-) as downloader:
+)
+
+async with Download(params) as downloader:
     await downloader.download_all()
 
-# URLs from a text file (one per line)
-async with Download(
+# URLs from a text file (one per line, comma/space separated supported)
+params = DownloadParams(
     url="urls.txt",
     codec="m4a",
     kbps=256,
-) as downloader:
+)
+
+async with Download(params) as downloader:
     await downloader.download_all()
+```
+
+---
+
+**Manual Configuration Management**
+
+```python
+from fm_dlp_core.commands.downloader import DownloadConfig, DownloadParams
+
+params = DownloadParams(
+    url="https://youtube.com/watch?v=...",
+    codec="mp3",
+    kbps=320,
+    quality="best",
+    jobs=4,
+    quiet=False,
+    metadata=True,
+    keep=False,
+    save=True,  # Save to config
+    use_config=True,  # Load from config
+    path="./downloads",
+    only_video=False,
+    cookies="chrome",
+    remote="ejs:github",
+    color=True,
+)
+
+# Config will automatically handle save/load based on params
+config = DownloadConfig(params)
+applied_params = config.apply_config()  # Returns dict with merged params
+config.save_config()  # Saves if save=True
 ```
 
 </details>
@@ -337,7 +413,8 @@ for data in search("Goreshit", limit=2, raw=True):
 The configuration system provides:
 
 - **Persistent parameters** — Save download settings across sessions
-- **Download path** — Set default download directory
+- **Multiple config profiles** — Each profile is keyed by the `color` parameter value
+- **Download path** — Set default download directory (stored separately)
 - **TOML format** — Human-readable config file
 - **Cookie support** — Browser cookies for restricted content
 
@@ -349,6 +426,19 @@ The configuration system provides:
 | **macOS**   | `~/Library/Application Support/fm-dlp/config.toml` |
 | **Linux**   | `~/.config/fm-dlp/config.toml`                     |
 
+### Configuration Profiles
+
+The configuration system supports multiple profiles using the `color` parameter as the key. This allows you to maintain different presets (e.g., "default", "high-quality", "video-only") and switch between them.
+
+### Configuration Functions
+
+| Function                | Module                   | Description                                   |
+| ----------------------- | ------------------------ | --------------------------------------------- |
+| `set_parameters(...)`   | `utils.config.parametrs` | Save download parameters with profile key     |
+| `get_parameters(color)` | `utils.config.parametrs` | Load download parameters for specific profile |
+| `set_path(path)`        | `utils.config.path`      | Set default download directory                |
+| `get_path()`            | `utils.config.path`      | Get current download directory                |
+
 <details>
 <summary><b>📘 Click for examples</b></summary>
 
@@ -357,7 +447,7 @@ The configuration system provides:
 ```python
 from fm_dlp_core.utils.config.parametrs import set_parameters, get_parameters
 
-# Save parameters
+# Save parameters with a specific color/key
 set_parameters(
     codec="mp3",
     kbps=256,
@@ -367,14 +457,18 @@ set_parameters(
     metadata=True,
     keep=False,
     only_video=False,
-    cookies="chrome",  # Use browser cookies
+    cookies="chrome",
     remote="ejs:github",
-    color=True,
+    color=True,  # This serves as the profile key
 )
 
-# Load saved parameters
-params = get_parameters()
+# Load saved parameters for the same profile
+params = get_parameters(color=True)
 print(params)  # {'codec': 'mp3', 'kbps': 256, ...}
+
+# Different profile
+set_parameters(codec="flac", kbps=0, color=False)
+params_high = get_parameters(color=False)
 ```
 
 ---
@@ -400,7 +494,7 @@ print(f"Downloads will be saved to: {path}")
 ```toml
 path = "/home/user/folder"
 
-[parameters]
+[parameters]  # Profile for color=True
 codec = "opus"
 kbps = 256
 quality = "best"
@@ -411,6 +505,48 @@ keep = false
 only_video = false
 cookies = "firefox"
 remote = "ejs:github"
+
+[parameters_0]  # Profile for color=False
+codec = "mp3"
+kbps = 192
+quality = "1080"
+jobs = 3
+quiet = true
+metadata = true
+keep = false
+only_video = false
+cookies = "chrome"
+remote = "ejs:github"
+```
+
+---
+
+**Using Configuration in Downloads**
+
+```python
+import asyncio
+from fm_dlp_core import run_downloader
+
+# This will automatically load saved config if use_config=True
+asyncio.run(
+    run_downloader(
+        url="https://youtube.com/watch?v=...",
+        codec="mp3",  # Will be overridden by saved config if use_config=True
+        use_config=True,
+        color=True,  # Determines which profile to load
+    )
+)
+
+# Save current parameters for future use
+asyncio.run(
+    run_downloader(
+        url="https://youtube.com/watch?v=...",
+        codec="flac",
+        kbps=0,
+        save=True,  # Save these parameters
+        color=True,
+    )
+)
 ```
 
 </details>
@@ -463,9 +599,10 @@ for result in provider.search(query="lo-fi", limit=5, is_track=True):
 For advanced use cases, you can build custom yt-dlp options:
 
 ```python
-from fm_dlp_core.commands.downloader.options_builder import OptionsBuilder
+from fm_dlp_core.commands.downloader import DownloadParams, OptionsBuilder
 
-builder = OptionsBuilder(
+params = DownloadParams(
+    url="https://youtube.com/watch?v=...",
     codec="mp3",
     kbps=320,
     quality="best",
@@ -473,13 +610,18 @@ builder = OptionsBuilder(
     quiet=False,
     metadata=True,
     keep=False,
+    save=False,
+    use_config=False,
+    path="./downloads",
     only_video=False,
     cookies="firefox",
-    path="./downloads",
+    remote="ejs:github",
     color=True,
 )
 
+builder = OptionsBuilder(params)
 opts = builder.build()
+
 # Add custom options
 opts["extractor_args"] = {"youtube": {"skip": ["hls"]}}
 
@@ -497,6 +639,9 @@ with YoutubeDL(opts) as ydl:
 For private or age-restricted content:
 
 ```python
+import asyncio
+from fm_dlp_core import run_downloader
+
 # Using browser cookies
 asyncio.run(
     run_downloader(
@@ -517,6 +662,21 @@ asyncio.run(
     )
 )
 ```
+
+</details>
+
+<details>
+<summary><b>Quality String Parsing</b></summary>
+
+The `quality` parameter supports the following formats:
+
+| Format    | Description                                               |
+| --------- | --------------------------------------------------------- |
+| `"best"`  | Highest available video quality (`bestvideo`)             |
+| `"worst"` | Lowest available video quality (`worstvideo`)             |
+| `"1080"`  | Best video with height ≤ 1080 (`bestvideo[height<=1080]`) |
+| `"1080p"` | Same as `"1080"` (strips the 'p' suffix)                  |
+| Custom    | Any valid yt-dlp format filter string                     |
 
 </details>
 
@@ -541,6 +701,7 @@ asyncio.run(
 | ---------------------- | ------------------------------------- | ------------------------------------- |
 | `Download`             | `commands.downloader`                 | Async downloader with context manager |
 | `DownloadConfig`       | `commands.downloader.config`          | Configuration container               |
+| `DownloadParams`       | `commands.downloader.params`          | Data container for all parameters     |
 | `OptionsBuilder`       | `commands.downloader.options_builder` | yt-dlp options builder                |
 | `URLParser`            | `commands.downloader.url_parser`      | Parse URLs from string/file           |
 | `Search`               | `commands.search`                     | Main search handler                   |
@@ -571,7 +732,7 @@ asyncio.run(
 
 ```python
 import asyncio
-from fm_dlp_core import search, run_downloader
+from fm_dlp_core import run_downloader
 
 async def download_playlist(playlist_url: str):
     await run_downloader(
@@ -621,6 +782,7 @@ asyncio.run(download_artist("Porter Robinson"))
 ```python
 import asyncio
 from fm_dlp_core import Download
+from fm_dlp_core.commands.downloader.params import DownloadParams
 
 class MyDownloader(Download):
     def _sync_download(self, url: str):
@@ -629,13 +791,27 @@ class MyDownloader(Download):
         super()._sync_download(url)
 
 async def main():
-    async with MyDownloader(
+    params = DownloadParams(
         url="https://youtube.com/watch?v=...",
         codec="mp4",
+        kbps=0,
         quality="1080p",
+        jobs=2,
+        quiet=False,
+        metadata=True,
+        keep=False,
+        save=False,
+        use_config=False,
         path="./videos",
-    ) as downloader:
+        only_video=True,
+        cookies=None,
+        remote="ejs:github",
+        color=True,
+    )
+    async with MyDownloader(params) as downloader:
         await downloader.download_all()
+
+asyncio.run(main())
 ```
 
 </details>
@@ -686,6 +862,101 @@ asyncio.run(safe_download("https://youtube.com/watch?v=invalid_id"))
 
 </details>
 
+<details>
+<summary><b>Example 6: Using Configuration Profiles</b></summary>
+
+```python
+from fm_dlp_core.utils.config.parametrs import set_parameters, get_parameters
+
+# Save a profile with color=True
+set_parameters(
+    codec="flac",
+    kbps=0,
+    quality="best",
+    jobs=4,
+    quiet=False,
+    metadata=True,
+    keep=False,
+    only_video=False,
+    cookies="chrome",
+    remote="ejs:github",
+    color=True,
+)
+
+# Save another profile with color=False
+set_parameters(
+    codec="mp3",
+    kbps=192,
+    quality="720",
+    jobs=2,
+    quiet=True,
+    metadata=True,
+    keep=False,
+    only_video=False,
+    cookies="firefox",
+    remote="ejs:github",
+    color=False,
+)
+
+# Load specific profile
+params = get_parameters(color=True)  # Returns the flac profile
+params_low = get_parameters(color=False)  # Returns the mp3 profile
+
+# Use a specific profile in download
+import asyncio
+from fm_dlp_core import run_downloader
+
+async def download_with_profile(profile_color: bool):
+    params = get_parameters(color=profile_color)
+    await run_downloader(
+        url="https://youtube.com/watch?v=...",
+        codec=params["codec"],
+        kbps=params["kbps"],
+        quality=params["quality"],
+        jobs=params["jobs"],
+        quiet=params["quiet"],
+        metadata=params["metadata"],
+        keep=params["keep"],
+        only_video=params["only_video"],
+        cookies=params["cookies"],
+        remote=params["remote"],
+        use_config=False,  # Manual param passing
+        color=profile_color,
+    )
+
+asyncio.run(download_with_profile(True))
+```
+
+</details>
+
+<details>
+<summary><b>Example 7: URLParser Usage</b></summary>
+
+```python
+from fm_dlp_core.commands.downloader import URLParser
+
+# Parse URLs from comma-separated string
+parser = URLParser("url1,url2,url3", quiet=False)
+urls = parser.parse()
+print(urls)  # ['url1', 'url2', 'url3']
+
+# Parse URLs from space-separated string
+parser = URLParser("url1 url2 url3", quiet=False)
+urls = parser.parse()
+
+# Parse URLs from file (one per line, comma/space separated supported)
+parser = URLParser("urls.txt", quiet=False)
+urls = parser.parse()
+
+# File content example:
+# https://youtube.com/watch?v=abc123
+# https://youtube.com/watch?v=def456, https://youtube.com/watch?v=ghi789
+# # This is a comment (ignored)
+# https://youtube.com/watch?v=jkl012
+```
+
+</details>
+
 ---
 
 ## 🖥️ Output Formatting
@@ -715,12 +986,13 @@ asyncio.run(safe_download("https://youtube.com/watch?v=invalid_id"))
 ### Colored Output Functions
 
 ```python
-from fm_dlp_core.utils.colors import success, error, info, hint
+from fm_dlp_core.utils.colors import success, error, info, hint, styled, BOLD_YELLOW
 
 print(success("Download completed!"))
 print(error("Failed to process video"))
 print(info("Extracting metadata..."))
 print(hint("Try using a higher bitrate for better quality"))
+print(styled("Custom styled message", BOLD_YELLOW))
 ```
 
 ---

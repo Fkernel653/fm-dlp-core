@@ -8,39 +8,15 @@ from ...utils import (
     VIDEO_CONTAINER_AUDIO_MAP,
     VIDEO_CONTAINERS,
 )
+from .params import DownloadParams
 
 
 @final
 class OptionsBuilder:
     """Build yt-dlp options dictionary."""
 
-    def __init__(
-        self,
-        codec: str,
-        kbps: int,
-        quality: str,
-        jobs: int,
-        quiet: bool,
-        metadata: bool,
-        keep: bool,
-        only_video: bool,
-        cookies: str | None,
-        path: str,
-        remote: str | None,
-        color: bool,
-    ):
-        self.codec = codec
-        self.kbps = kbps
-        self.quality = quality
-        self.jobs = jobs
-        self.quiet = quiet
-        self.metadata = metadata
-        self.keep = keep
-        self.only_video = only_video
-        self.cookies = cookies
-        self.path = path
-        self.remote = remote
-        self.color = color
+    def __init__(self, params: DownloadParams):
+        self.params = params
 
     def _parse_quality(self) -> str:
         """
@@ -56,20 +32,20 @@ class OptionsBuilder:
         Returns:
             str: A format filter string compatible with yt-dlp's --format option.
         """
-        if self.quality == "best":
+        if self.params.quality == "best":
             return "bestvideo"
-        if self.quality == "worst":
+        if self.params.quality == "worst":
             return "worstvideo"
 
-        if self.quality.isdigit():
-            height = self.quality
+        if self.params.quality.isdigit():
+            height = self.params.quality
             return f"bestvideo[height<={height}]"
 
-        elif self.quality.endswith("p") and self.quality[:-1].isdigit():
-            height = self.quality[:-1]
+        elif self.params.quality.endswith("p") and self.params.quality[:-1].isdigit():
+            height = self.params.quality[:-1]
             return f"bestvideo[height<={height}]"
 
-        return self.quality
+        return self.params.quality
 
     def build(self) -> dict[str, Any]:
         """
@@ -87,25 +63,25 @@ class OptionsBuilder:
                 to the YoutubeDL constructor.
         """
         base_opts: dict[str, Any] = {
-            "quiet": self.quiet,
-            "no_warnings": self.quiet,
-            "outtmpl": str(Path(self.path) / "%(title)s.%(ext)s"),
-            "concurrent_downloads": self.jobs,
-            "concurrent_fragment_downloads": self.jobs,
+            "quiet": self.params.quiet,
+            "no_warnings": self.params.quiet,
+            "outtmpl": str(Path(self.params.path) / "%(title)s.%(ext)s"),
+            "concurrent_downloads": self.params.jobs,
+            "concurrent_fragment_downloads": self.params.jobs,
             "extractor_retries": 3,
             "postprocessors": [],
-            "keepvideo": self.keep,
+            "keepvideo": self.params.keep,
         }
 
-        if self.remote:
-            base_opts["remote"] = [self.remote]
+        if self.params.remote:
+            base_opts["remote"] = [self.params.remote]
 
-        if not self.color:
+        if not self.params.color:
             base_opts["color"] = "never"
 
         self._add_cookies(base_opts)
 
-        if self.only_video:
+        if self.params.only_video:
             self._build_video_opts(base_opts)
         else:
             self._build_audio_opts(base_opts)
@@ -114,31 +90,31 @@ class OptionsBuilder:
 
     def _add_cookies(self, opts: dict[str, Any]) -> None:
         """Add cookie configuration to options."""
-        if self.cookies:
-            cookie_path = Path(self.cookies)
+        if self.params.cookies:
+            cookie_path = Path(self.params.cookies)
             if cookie_path.is_file():
                 opts["cookiefile"] = str(cookie_path)
             else:
-                opts["cookiesfrombrowser"] = (self.cookies,)
+                opts["cookiesfrombrowser"] = (self.params.cookies,)
 
     def _build_video_opts(self, opts: dict[str, Any]) -> None:
         """Build options for video-only download."""
         opts["format"] = self._parse_quality()
 
-        if self.codec in VIDEO_CONTAINERS:
+        if self.params.codec in VIDEO_CONTAINERS:
             opts["postprocessors"].append(
                 {
                     "key": "FFmpegVideoConvertor",
-                    "preferedformat": self.codec,
+                    "preferedformat": self.params.codec,
                 }
             )
 
     def _build_audio_opts(self, opts: dict[str, Any]) -> None:
         """Build options for audio download."""
 
-        if self.codec in AUDIO_CODECS:
+        if self.params.codec in AUDIO_CODECS:
             self._build_audio_only_opts(opts)
-        elif self.codec in VIDEO_CONTAINERS:
+        elif self.params.codec in VIDEO_CONTAINERS:
             self._build_video_with_audio_opts(opts)
 
     def _build_audio_only_opts(self, opts: dict[str, Any]) -> None:
@@ -147,12 +123,12 @@ class OptionsBuilder:
         opts["postprocessors"].append(
             {
                 "key": "FFmpegExtractAudio",
-                "preferredcodec": self.codec,
-                "preferredquality": str(self.kbps),
+                "preferredcodec": self.params.codec,
+                "preferredquality": str(self.params.kbps),
             }
         )
 
-        if self.metadata:
+        if self.params.metadata:
             opts["postprocessors"].extend(
                 [
                     {"key": "FFmpegMetadata"},
@@ -164,13 +140,13 @@ class OptionsBuilder:
 
     def _build_video_with_audio_opts(self, opts: dict[str, Any]) -> None:
         """Build options for video download with audio."""
-        audio_ext = VIDEO_CONTAINER_AUDIO_MAP[self.codec]
+        audio_ext = VIDEO_CONTAINER_AUDIO_MAP[self.params.codec]
 
         opts["format"] = f"{self._parse_quality()}+bestaudio[ext={audio_ext}]/best"
 
         opts["postprocessors"].append(
             {
                 "key": "FFmpegVideoConvertor",
-                "preferedformat": self.codec,
+                "preferedformat": self.params.codec,
             }
         )

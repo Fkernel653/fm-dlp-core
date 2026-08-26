@@ -12,6 +12,7 @@ This module provides the core download functionality with support for:
 Classes:
     Download: Main async downloader class with context manager support
     DownloadConfig: Configuration container for download settings
+    DownloadParams: Data container for all download configuration parameters.
     OptionsBuilder: yt-dlp options builder with format/quality handling
     URLParser: Parse single URLs or bulk imports from text files
 
@@ -22,11 +23,13 @@ Functions:
 from .config import DownloadConfig
 from .downloader import Download, run_downloader
 from .options_builder import OptionsBuilder
+from .params import DownloadParams
 from .url_parser import URLParser
 
 __all__ = [
     "Download",
     "DownloadConfig",
+    "DownloadParams",
     "OptionsBuilder",
     "URLParser",
     "run_downloader",
