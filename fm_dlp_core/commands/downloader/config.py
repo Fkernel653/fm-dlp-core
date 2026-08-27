@@ -12,8 +12,8 @@ class DownloadConfig:
     """Configuration container for download settings."""
 
     def __init__(self, params: DownloadParams):
-        self.params = params
         _ = validate_remote(params.remote)
+        self.params = params
 
     def apply_config(self) -> dict[str, Any]:
         """

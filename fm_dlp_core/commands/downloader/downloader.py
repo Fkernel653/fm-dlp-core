@@ -129,7 +129,7 @@ class Download:
 
         await asyncio.to_thread(self._sync_download, url)
 
-        return success(url) if not self.quiet else None
+        return success(url) + "\n" if not self.quiet else None
 
     def _get_ytdlp(self):
         """Lazy import yt-dlp only once."""

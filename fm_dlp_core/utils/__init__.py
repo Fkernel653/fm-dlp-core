@@ -12,6 +12,8 @@ Constants:
     ALL_CODECS: Union of AUDIO_CODECS and VIDEO_CONTAINERS
     VIDEO_CONTAINER_AUDIO_MAP: Mapping of video containers to their default
                                audio codec for extraction
+    VALID_REMOTE_SOURCES:  VALID_REMOTE_SOURCES: Set of valid remote source identifiers for template
+                             or package fetching (ejs:github, ejs:npm, None)
 
 Functions:
     echo: Print a message to stdout or stderr with newline.
@@ -25,7 +27,6 @@ from typing import TextIO
 
 from .colors import error
 
-VALID_REMOTE_SOURCES = ("ejs:github", "ejs:npm", None)
 AUDIO_CODECS: set[str] = {"mp3", "aac", "flac", "m4a", "opus", "vorbis", "wav", "alac"}
 VIDEO_CONTAINERS: set[str] = {"mp4", "mov", "mkv", "webm", "avi", "flv"}
 ALL_CODECS: set[str] = AUDIO_CODECS | VIDEO_CONTAINERS
@@ -37,6 +38,7 @@ VIDEO_CONTAINER_AUDIO_MAP: dict[str, str] = {
     "avi": "mp3",
     "flv": "aac",
 }
+VALID_REMOTE_SOURCES: set[str | None] = {"ejs:github", "ejs:npm", None}
 
 
 def echo(text: str, file: TextIO = sys.stdout) -> None:
