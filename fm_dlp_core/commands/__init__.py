@@ -20,3 +20,16 @@ Subpackages:
     config: Configuration management for paths and parameters
     search: Result formatting and provider implementations (YouTube, YouTube Music)
 """
+
+_YoutubeDL = None
+
+
+def get_ytdlp():
+    """Lazy import yt-dlp only once."""
+    global _YoutubeDL
+
+    if _YoutubeDL is None:
+        from yt_dlp import YoutubeDL
+
+        _YoutubeDL = YoutubeDL
+    return _YoutubeDL

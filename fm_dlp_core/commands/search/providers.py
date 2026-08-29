@@ -135,8 +135,9 @@ class YouTubeProvider(BaseProvider):
 
     @override
     def _extract_results(self, query: str, limit: int, is_track: bool) -> list[Any]:
-        from yt_dlp import YoutubeDL
+        from .. import get_ytdlp
 
+        YoutubeDL = get_ytdlp()
         with YoutubeDL(self._ytdl_opts()) as ydl:
             info = ydl.extract_info(
                 self._build_search_query(query, limit, is_track), download=False

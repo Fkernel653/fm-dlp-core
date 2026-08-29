@@ -2,12 +2,12 @@
 
 import asyncio
 from collections.abc import AsyncIterator
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from types import TracebackType
 from typing import final
 
 from ...utils import VIDEO_CONTAINERS, echo
 from ...utils.colors import BOLD_YELLOW, info, set_colors, styled, success
+from .. import get_ytdlp
 from .config import DownloadConfig
 from .options_builder import OptionsBuilder
 from .params import DownloadParams
@@ -43,7 +43,6 @@ class Download:
         self._url_list = URLParser(params.url, params.quiet).parse()
 
         set_colors(params.color)
-        self._YoutubeDL = None
 
     def _get_executor(self):
         """
@@ -58,14 +57,15 @@ class Download:
             ProcessPoolExecutor | ThreadPoolExecutor: An executor instance suitable
                 for the current download task type.
         """
+        from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+
         if self.only_video or self.codec in VIDEO_CONTAINERS:
             return ProcessPoolExecutor(max_workers=self.jobs)
         else:
             return ThreadPoolExecutor(max_workers=self.jobs)
 
     async def __aenter__(self):
-        """Setup thread pool executor on context enter."""
-        self._executor = self._get_executor()
+        """Enter the async context manager and return the downloader instance."""
         return self
 
     async def __aexit__(
@@ -129,23 +129,15 @@ class Download:
 
         await asyncio.to_thread(self._sync_download, url)
 
-        return success(url) + "\n" if not self.quiet else None
-
-    def _get_ytdlp(self):
-        """Lazy import yt-dlp only once."""
-        if self._YoutubeDL is None:
-            from yt_dlp import YoutubeDL
-
-            self._YoutubeDL = YoutubeDL
-        return self._YoutubeDL
+        return f"\n{success(url)}\n" if not self.quiet else None
 
     def _sync_download(self, url: str) -> None:
         """Synchronous download using yt-dlp (runs in thread pool)."""
         options = OptionsBuilder(self.params).build()
 
-        YoutubeDL = self._get_ytdlp()
+        YoutubeDL = get_ytdlp()
         with YoutubeDL(options) as ydl:
-            ydl.download([url])
+            _ = ydl.download([url])
 
 
 async def run_downloader(
