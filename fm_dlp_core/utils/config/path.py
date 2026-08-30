@@ -1,5 +1,3 @@
-"""Persistent download path storage using JSON config file."""
-
 from pathlib import Path
 
 from ...utils import echo, echo_error
@@ -11,7 +9,7 @@ from ..colors import (
     set_colors,
     styled,
 )
-from . import CONFIG_FILE, load_config, update_config
+from .config_manager import CONFIG_FILE, load_config, update_config
 
 PATH_KEY: str = "path"
 

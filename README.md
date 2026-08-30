@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=fff&style=for-the-badge)](https://python.org)
 [![PyPI](https://img.shields.io/pypi/v/fm-dlp-core?style=for-the-badge&logo=pypi&logoColor=fff&label=PyPI&color=007ec6)](https://pypi.org/project/fm-dlp-core)
-[![License](https://img.shields.io/badge/License-AGPLv3-00b96b?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-AGPLv3-00b96b?style=for-the-badge&logo=gnu&logoColor=white)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-9cf?style=for-the-badge)](<>)
 [![Ruff](https://img.shields.io/badge/Code%20Style-Ruff-ff69b4?logo=ruff&logoColor=fff&style=for-the-badge)](https://docs.astral.sh/ruff)
 
@@ -135,7 +135,7 @@ The download system supports:
 All download parameters are encapsulated in the `DownloadParams` dataclass:
 
 ```python
-from fm_dlp_core.commands.downloader.params import DownloadParams
+from fm_dlp_core.commands.downloader import DownloadParams
 
 params = DownloadParams(
     url="https://youtube.com/watch?v=...",
@@ -216,8 +216,8 @@ asyncio.run(
 **Advanced Usage with Download Class**
 
 ```python
-from fm_dlp_core import Download
-from fm_dlp_core.commands.downloader.params import DownloadParams
+from fm_dlp_core.commands.downloader import Download, DownloadParams
+
 
 async def download_video():
     params = DownloadParams(
@@ -241,8 +241,7 @@ async def download_video():
 **Batch Downloads**
 
 ```python
-from fm_dlp_core import Download
-from fm_dlp_core.commands.downloader.params import DownloadParams
+from fm_dlp_core.commands.downloader import Download, DownloadParams
 
 # Multiple URLs (comma or space separated)
 params = DownloadParams(
@@ -344,8 +343,8 @@ from fm_dlp_core import search
 for result in search(
     query="Sewerslvt",
     limit=5,
-    yt_video=False,   # Use YouTube Music
-    album=False,      # Search for tracks
+    yt_video=False,  # Use YouTube Music
+    album=False,  # Search for tracks
     color=True,
 ):
     print(result)
@@ -360,7 +359,7 @@ for result in search(
     query="Draining Love Story",
     limit=3,
     yt_video=False,
-    album=True,       # Search for albums
+    album=True,  # Search for albums
 ):
     print(result)
 ```
@@ -373,7 +372,7 @@ for result in search(
 for result in search(
     query="Python tutorial",
     limit=5,
-    yt_video=True,    # Use YouTube (videos)
+    yt_video=True,  # Use YouTube (videos)
     album=False,
 ):
     print(result)
@@ -417,6 +416,7 @@ The configuration system provides:
 - **Download path** — Set default download directory (stored separately)
 - **TOML format** — Human-readable config file
 - **Cookie support** — Browser cookies for restricted content
+- **Automatic config management** — TOML serialization and caching for performance
 
 ### Configuration File Location
 
@@ -426,72 +426,228 @@ The configuration system provides:
 | **macOS**   | `~/Library/Application Support/fm-dlp/config.toml` |
 | **Linux**   | `~/.config/fm-dlp/config.toml`                     |
 
-### Configuration Profiles
+### Configuration Manager
 
-The configuration system supports multiple profiles using the `color` parameter as the key. This allows you to maintain different presets (e.g., "default", "high-quality", "video-only") and switch between them.
+The `config_manager.py` module provides a robust configuration management system with the following features:
 
-### Configuration Functions
+#### TOMLSerializer Class
+
+The `TOMLSerializer` class handles converting Python dictionaries to TOML format:
+
+```python
+from fm_dlp_core.utils.config_manager import TOMLSerializer
+
+# Serialize a dictionary to TOML string
+data = {
+    "path": "/downloads",
+    "parameters": {
+        "codec": "mp3",
+        "kbps": 320,
+        "quality": "best"
+    }
+}
+toml_string = TOMLSerializer.dumps(data)
+print(toml_string)
+# Output:
+# path = "/downloads"
+# [parameters]
+# codec = "mp3"
+# kbps = 320
+# quality = "best"
+```
+
+#### Configuration Functions
 
 | Function                | Module                   | Description                                   |
 | ----------------------- | ------------------------ | --------------------------------------------- |
+| `get_config_dir()`      | `utils.config_manager`   | Get OS-specific config directory path         |
+| `load_config(color)`    | `utils.config_manager`   | Load config from TOML file with caching       |
+| `update_config(data)`   | `utils.config_manager`   | Update config file, creating directories      |
 | `set_parameters(...)`   | `utils.config.parametrs` | Save download parameters with profile key     |
 | `get_parameters(color)` | `utils.config.parametrs` | Load download parameters for specific profile |
 | `set_path(path)`        | `utils.config.path`      | Set default download directory                |
 | `get_path()`            | `utils.config.path`      | Get current download directory                |
 
+#### Configuration Management Features
+
+1. **Cross-Platform Path Resolution**
+   - Windows: Uses `LOCALAPPDATA` or `APPDATA` environment variables
+   - macOS: Uses `~/Library/Application Support`
+   - Linux: Uses `XDG_CONFIG_HOME` or `~/.config`
+
+2. **Caching for Performance**
+   - Configuration is cached using `@lru_cache(maxsize=1)`
+   - Cache is automatically cleared when configuration is updated
+
+3. **Error Handling**
+   - Gracefully handles corrupted config files with colored error messages
+   - Automatically creates new config file if corrupted or missing
+
+4. **Thread-Safe Operations**
+   - Configuration file operations are atomic with proper error handling
+   - Permission errors and OS errors are caught and reported
+
+### Configuration Profiles
+
+The configuration system supports multiple profiles using the `color` parameter as the key. This allows you to maintain different presets (e.g., "default", "high-quality", "video-only") and switch between them.
+
+### Configuration Manager Usage
+
 <details>
 <summary><b>📘 Click for examples</b></summary>
 
-**Save Download Parameters**
+**Loading Configuration with Caching**
 
 ```python
-from fm_dlp_core.utils.config.parametrs import set_parameters, get_parameters
+from fm_dlp_core.utils.config_manager import load_config, update_config
 
-# Save parameters with a specific color/key
-set_parameters(
-    codec="mp3",
-    kbps=256,
-    quality="720p",
-    jobs=4,
-    quiet=False,
-    metadata=True,
-    keep=False,
-    only_video=False,
-    cookies="chrome",
-    remote="ejs:github",
-    color=True,  # This serves as the profile key
-)
+# Load configuration (cached for performance)
+config = load_config(color=True)
+print(config)  # {'path': '/downloads', 'parameters': {...}}
 
-# Load saved parameters for the same profile
-params = get_parameters(color=True)
-print(params)  # {'codec': 'mp3', 'kbps': 256, ...}
-
-# Different profile
-set_parameters(codec="flac", kbps=0, color=False)
-params_high = get_parameters(color=False)
+# Update configuration (clears cache automatically)
+new_config = {
+    "path": "/new/downloads",
+    "parameters": {
+        "codec": "flac",
+        "kbps": 0,
+        "quality": "best",
+        "jobs": 4,
+        "metadata": True
+    }
+}
+success = update_config(new_config)
+if success:
+    print("Configuration updated successfully")
+    # Cache is automatically cleared
 ```
 
----
-
-**Set Download Path**
+**Manual Configuration File Management**
 
 ```python
-from fm_dlp_core.utils.config.path import set_path, get_path
+from pathlib import Path
+from fm_dlp_core.utils.config_manager import CONFIG_DIR, CONFIG_FILE, TOMLSerializer
 
-# Set download path
-result = set_path("/my/download/folder")
-print(result)  # "Configuration saved successfully"
+# Get configuration directory
+print(f"Config directory: {CONFIG_DIR}")
+# Output: /home/user/.config/fm-dlp (Linux)
+# Output: /Users/user/Library/Application Support/fm-dlp (macOS)
+# Output: C:\Users\user\AppData\Local\fm-dlp (Windows)
 
-# Get current path
-path = get_path()
-print(f"Downloads will be saved to: {path}")
+# Check if config file exists
+if CONFIG_FILE.exists():
+    print("Config file found!")
+    content = CONFIG_FILE.read_text(encoding="utf-8")
+    print(content)
+
+# Create custom TOML data
+data = {
+    "path": "/custom/path",
+    "parameters": {
+        "codec": "opus",
+        "kbps": 192,
+        "quality": "720p",
+        "quiet": True,
+        "metadata": True,
+        "keep": False,
+        "only_video": False,
+        "cookies": "firefox",
+        "remote": "ejs:github"
+    }
+}
+
+# Serialize and save manually
+toml_content = TOMLSerializer.dumps(data)
+CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+CONFIG_FILE.write_text(toml_content, encoding="utf-8")
 ```
 
----
+**Configuration with Error Handling**
 
-**Configuration File Examples**
+```python
+from fm_dlp_core.utils.config_manager import load_config
+from fm_dlp_core.utils.colors import error
+
+# Load configuration with error handling
+try:
+    config = load_config(color=True)
+    if not config:
+        print("No configuration found. Using defaults...")
+    else:
+        print(f"Loaded configuration: {config}")
+except Exception as e:
+    print(error(f"Failed to load configuration: {e}"))
+```
+
+**Automatic Profile Management with Config Manager**
+
+```python
+from fm_dlp_core.utils.config_manager import load_config, update_config
+
+def save_parameters(profile_key: str, params: dict):
+    """Save parameters for a specific profile"""
+    config = load_config(color=True)
+
+    # Use the profile key as the parameters key
+    config[f"parameters_{profile_key}"] = params
+
+    # Save to file
+    if not update_config(config):
+        print(f"Failed to save parameters for profile: {profile_key}")
+
+def load_parameters(profile_key: str) -> dict:
+    """Load parameters for a specific profile"""
+    config = load_config(color=True)
+
+    # Try different key formats
+    for key in [f"parameters_{profile_key}", f"parameters", f"params"]:
+        if key in config:
+            return config[key]
+
+    return {}
+
+# Save different profiles
+save_parameters("high", {
+    "codec": "flac",
+    "kbps": 0,
+    "quality": "best",
+    "jobs": 8
+})
+
+save_parameters("mobile", {
+    "codec": "aac",
+    "kbps": 128,
+    "quality": "720p",
+    "jobs": 2
+})
+
+# Load specific profiles
+high_params = load_parameters("high")
+mobile_params = load_parameters("mobile")
+print(f"High quality: {high_params}")
+print(f"Mobile quality: {mobile_params}")
+```
+
+**Configuration Directory Structure**
+
+```python
+from fm_dlp_core.utils.config_manager import get_config_dir
+
+# Get configuration directory
+config_dir = get_config_dir("my-app")  # Custom application name
+print(f"Config directory: {config_dir}")
+
+# Default directory for fm-dlp
+default_dir = get_config_dir()  # Uses "fm-dlp"
+print(f"Default config directory: {default_dir}")
+```
+
+</details>
+
+### Configuration File Examples
 
 ```toml
+# Main configuration file: config.toml
 path = "/home/user/folder"
 
 [parameters]  # Profile for color=True
@@ -516,6 +672,18 @@ metadata = true
 keep = false
 only_video = false
 cookies = "chrome"
+remote = "ejs:github"
+
+[parameters_high]  # Custom profile
+codec = "flac"
+kbps = 0
+quality = "best"
+jobs = 8
+quiet = false
+metadata = true
+keep = false
+only_video = false
+cookies = "firefox"
 remote = "ejs:github"
 ```
 
@@ -549,7 +717,18 @@ asyncio.run(
 )
 ```
 
-</details>
+### Configuration Manager API Reference
+
+| Class/Method                     | Description                                        |
+| -------------------------------- | -------------------------------------------------- |
+| `get_config_dir(dir_name)`       | Get OS-specific config directory path              |
+| `CONFIG_DIR`                     | Global constant for config directory               |
+| `CONFIG_FILE`                    | Global constant for config file path               |
+| `TOMLSerializer.dumps(data)`     | Serialize dict to TOML string                      |
+| `TOMLSerializer._value_to_str()` | Convert Python value to TOML string                |
+| `load_config(color)`             | Load config with caching and error handling        |
+| `update_config(data)`            | Update config file, creating directories if needed |
+| `ENCODING`                       | Global encoding constant (UTF-8)                   |
 
 ---
 
@@ -562,6 +741,7 @@ Create your own search provider by subclassing `BaseProvider`:
 
 ```python
 from fm_dlp_core.commands.search.providers import BaseProvider
+
 
 class SoundCloudProvider(BaseProvider):
     def _extract_results(self, query: str, limit: int, is_track: bool) -> list:
@@ -584,6 +764,7 @@ class SoundCloudProvider(BaseProvider):
 
     def _get_empty_message(self, query: str, is_track: bool) -> str:
         return f"No results found for '{query}'\n"
+
 
 # Use your provider
 provider = SoundCloudProvider(color=True, error_prefix="Error: ")
@@ -627,6 +808,7 @@ opts["extractor_args"] = {"youtube": {"skip": ["hls"]}}
 
 # Use with yt-dlp directly
 from yt_dlp import YoutubeDL
+
 with YoutubeDL(opts) as ydl:
     ydl.download(["https://youtube.com/watch?v=..."])
 ```
@@ -734,6 +916,7 @@ The `quality` parameter supports the following formats:
 import asyncio
 from fm_dlp_core import run_downloader
 
+
 async def download_playlist(playlist_url: str):
     await run_downloader(
         url=playlist_url,
@@ -744,6 +927,7 @@ async def download_playlist(playlist_url: str):
         path="./music",
         color=True,
     )
+
 
 asyncio.run(download_playlist("https://music.youtube.com/playlist?list=..."))
 ```
@@ -757,8 +941,10 @@ asyncio.run(download_playlist("https://music.youtube.com/playlist?list=..."))
 import asyncio
 from fm_dlp_core import search, run_downloader
 
+
 def get_top_tracks(artist: str, limit: int = 5) -> list[str]:
     return list(search(artist, limit=limit, yt_video=False, only_url=True))
+
 
 async def download_artist(artist: str):
     urls = get_top_tracks(artist, limit=3)
@@ -770,6 +956,7 @@ async def download_artist(artist: str):
             metadata=True,
             path=f"./music/{artist}",
         )
+
 
 asyncio.run(download_artist("Porter Robinson"))
 ```
@@ -784,11 +971,13 @@ import asyncio
 from fm_dlp_core import Download
 from fm_dlp_core.commands.downloader.params import DownloadParams
 
+
 class MyDownloader(Download):
     def _sync_download(self, url: str):
         # Override to add custom behavior
         print(f"Downloading: {url}")
         super()._sync_download(url)
+
 
 async def main():
     params = DownloadParams(
@@ -810,6 +999,7 @@ async def main():
     )
     async with MyDownloader(params) as downloader:
         await downloader.download_all()
+
 
 asyncio.run(main())
 ```
@@ -846,6 +1036,7 @@ for result in search(
 import asyncio
 from fm_dlp_core import run_downloader
 
+
 async def safe_download(url: str):
     try:
         await run_downloader(
@@ -856,6 +1047,7 @@ async def safe_download(url: str):
         )
     except Exception as e:
         print(f"Download failed for {url}: {e}")
+
 
 asyncio.run(safe_download("https://youtube.com/watch?v=invalid_id"))
 ```
@@ -906,6 +1098,7 @@ params_low = get_parameters(color=False)  # Returns the mp3 profile
 import asyncio
 from fm_dlp_core import run_downloader
 
+
 async def download_with_profile(profile_color: bool):
     params = get_parameters(color=profile_color)
     await run_downloader(
@@ -923,6 +1116,7 @@ async def download_with_profile(profile_color: bool):
         use_config=False,  # Manual param passing
         color=profile_color,
     )
+
 
 asyncio.run(download_with_profile(True))
 ```

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fm-dlp-core"
-version = "0.2.1"
+version = "0.2.2"
 description = "Core package for YouTube audio/video downloading and searching."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -27,7 +27,6 @@ keywords = [
 ]
 classifiers = [
     "License :: OSI Approved :: GNU Affero General Public License v3",
-    "Environment :: Console",
     "Intended Audience :: End Users/Desktop",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
@@ -37,11 +36,11 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3.15",
+    "Topic :: Software Development :: Libraries",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Multimedia :: Sound/Audio",
     "Topic :: Multimedia :: Video",
     "Topic :: Internet :: WWW/HTTP",
-    "Topic :: Utilities",
 ]
 
 dependencies = [
@@ -51,7 +50,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff"]
+dev = ["ruff", "uv"]
 
 [project.urls]
 Homepage = "https://github.com/Fkernel653/fm-dlp"
