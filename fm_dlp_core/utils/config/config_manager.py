@@ -8,7 +8,7 @@ from typing import Any
 from ...utils import echo
 from ..colors import error, set_colors
 
-ENCODING: str = "utf-8"
+ENCODING = "utf-8"
 
 
 def get_config_dir(dir_name: str = "fm-dlp") -> str:

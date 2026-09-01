@@ -15,21 +15,4 @@ Modules:
 The downloader module provides the `Download` class and `run_downloader`
 function for programmatic use, while the search module offers the `search`
 function for quick lookups.
-
-Subpackages:
-    config: Configuration management for paths and parameters
-    search: Result formatting and provider implementations (YouTube, YouTube Music)
 """
-
-_YoutubeDL = None
-
-
-def get_ytdlp():
-    """Lazy import yt-dlp only once."""
-    global _YoutubeDL
-
-    if _YoutubeDL is None:
-        from yt_dlp import YoutubeDL
-
-        _YoutubeDL = YoutubeDL
-    return _YoutubeDL

@@ -13,7 +13,6 @@ Constants:
 
 Functions:
     set_colors: Enable or disable color output globally.
-    is_colors_enabled: Check if color output is currently enabled.
     styled: Apply ANSI color codes to text conditionally.
     success: Format text as a success message (bold green).
     error: Format text as an error message (bold red).
@@ -27,17 +26,17 @@ Example:
     >>> print(error("Failed to download"))
 """
 
-RESET: str = "\033[0m"
+RESET = "\033[0m"
 
-BOLD_WHITE: str = "\033[37m"
-GRAY: str = "\033[90m"
+BOLD_WHITE = "\033[37m"
+GRAY = "\033[90m"
 
-WHITE: str = "\033[0;37m"
+WHITE = "\033[0;37m"
 
-BOLD_RED: str = "\033[1;31m"
-BOLD_GREEN: str = "\033[1;32m"
-BOLD_YELLOW: str = "\033[1;33m"
-BOLD_CYAN: str = "\033[1;36m"
+BOLD_RED = "\033[1;31m"
+BOLD_GREEN = "\033[1;32m"
+BOLD_YELLOW = "\033[1;33m"
+BOLD_CYAN = "\033[1;36m"
 
 colors_enabled: bool = True
 
@@ -45,10 +44,6 @@ colors_enabled: bool = True
 def set_colors(enabled: bool):
     global colors_enabled
     colors_enabled = enabled
-
-
-def is_colors_enabled() -> bool:
-    return colors_enabled
 
 
 def styled(text: str, color: str) -> str:
@@ -69,7 +64,7 @@ def styled(text: str, color: str) -> str:
         str: The colorized text with ANSI escape sequences if colors are enabled,
              otherwise the original text unchanged.
     """
-    if is_colors_enabled():
+    if colors_enabled:
         return color + text + RESET
     else:
         return text
@@ -91,7 +86,7 @@ def success(text: str, prefix: str = "Success: ") -> str:
     Returns:
         str: Formatted success message with optional coloring.
     """
-    if is_colors_enabled():
+    if colors_enabled:
         return BOLD_GREEN + prefix + RESET + text
     else:
         return prefix + text
@@ -112,7 +107,7 @@ def error(text: str, prefix: str = "Error: ") -> str:
     Returns:
         str: Formatted error message with optional coloring.
     """
-    if is_colors_enabled():
+    if colors_enabled:
         return BOLD_RED + prefix + RESET + text
     else:
         return prefix + text
@@ -133,7 +128,7 @@ def info(text: str, prefix: str = "Info: ") -> str:
     Returns:
         str: Formatted info message with optional coloring.
     """
-    if is_colors_enabled():
+    if colors_enabled:
         return BOLD_CYAN + prefix + RESET + text
     else:
         return prefix + text
@@ -154,7 +149,7 @@ def hint(text: str, prefix: str = "Hint: ") -> str:
     Returns:
         str: Formatted hint message with optional coloring.
     """
-    if is_colors_enabled():
+    if colors_enabled:
         return GRAY + prefix + RESET + text
     else:
         return prefix + text

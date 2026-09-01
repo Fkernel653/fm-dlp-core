@@ -11,7 +11,7 @@ from ..colors import (
 )
 from .config_manager import CONFIG_FILE, load_config, update_config
 
-PATH_KEY: str = "path"
+PATH_KEY = "path"
 
 
 def set_path(

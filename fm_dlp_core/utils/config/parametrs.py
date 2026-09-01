@@ -4,7 +4,7 @@ from ...utils import echo, echo_error, validate_remote
 from ..colors import set_colors, success
 from .config_manager import CONFIG_FILE, load_config, update_config
 
-PARAM_KEY: str = "parameters"
+PARAM_KEY = "parameters"
 
 
 def _if_quiet(

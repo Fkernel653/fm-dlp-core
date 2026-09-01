@@ -3,18 +3,15 @@
 import asyncio
 from collections.abc import AsyncIterator
 from types import TracebackType
-from typing import final
 
-from ...utils import VIDEO_CONTAINERS, echo
+from ...utils import VIDEO_CONTAINERS, echo, get_ytdlp
 from ...utils.colors import BOLD_YELLOW, info, set_colors, styled, success
-from .. import get_ytdlp
 from .config import DownloadConfig
 from .options_builder import OptionsBuilder
 from .params import DownloadParams
 from .url_parser import URLParser
 
 
-@final
 class Download:
     """Async YouTube audio/video downloader."""
 

@@ -440,11 +440,7 @@ from fm_dlp_core.utils.config_manager import TOMLSerializer
 # Serialize a dictionary to TOML string
 data = {
     "path": "/downloads",
-    "parameters": {
-        "codec": "mp3",
-        "kbps": 320,
-        "quality": "best"
-    }
+    "parameters": {"codec": "mp3", "kbps": 320, "quality": "best"},
 }
 toml_string = TOMLSerializer.dumps(data)
 print(toml_string)
@@ -513,8 +509,8 @@ new_config = {
         "kbps": 0,
         "quality": "best",
         "jobs": 4,
-        "metadata": True
-    }
+        "metadata": True,
+    },
 }
 success = update_config(new_config)
 if success:
@@ -552,8 +548,8 @@ data = {
         "keep": False,
         "only_video": False,
         "cookies": "firefox",
-        "remote": "ejs:github"
-    }
+        "remote": "ejs:github",
+    },
 }
 
 # Serialize and save manually
@@ -584,6 +580,7 @@ except Exception as e:
 ```python
 from fm_dlp_core.utils.config_manager import load_config, update_config
 
+
 def save_parameters(profile_key: str, params: dict):
     """Save parameters for a specific profile"""
     config = load_config(color=True)
@@ -594,6 +591,7 @@ def save_parameters(profile_key: str, params: dict):
     # Save to file
     if not update_config(config):
         print(f"Failed to save parameters for profile: {profile_key}")
+
 
 def load_parameters(profile_key: str) -> dict:
     """Load parameters for a specific profile"""
@@ -606,20 +604,11 @@ def load_parameters(profile_key: str) -> dict:
 
     return {}
 
-# Save different profiles
-save_parameters("high", {
-    "codec": "flac",
-    "kbps": 0,
-    "quality": "best",
-    "jobs": 8
-})
 
-save_parameters("mobile", {
-    "codec": "aac",
-    "kbps": 128,
-    "quality": "720p",
-    "jobs": 2
-})
+# Save different profiles
+save_parameters("high", {"codec": "flac", "kbps": 0, "quality": "best", "jobs": 8})
+
+save_parameters("mobile", {"codec": "aac", "kbps": 128, "quality": "720p", "jobs": 2})
 
 # Load specific profiles
 high_params = load_parameters("high")
