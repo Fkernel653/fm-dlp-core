@@ -5,8 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from ...utils import echo
-from ..colors import error, set_colors
+from ...utils import echo, error, set_colors
 
 ENCODING = "utf-8"
 

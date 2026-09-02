@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from ...utils import echo, echo_error
-from ..colors import (
+from ...utils import (
     BOLD_GREEN,
+    echo,
+    echo_error,
     error,
     hint,
     info,
