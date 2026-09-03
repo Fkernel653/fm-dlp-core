@@ -1,6 +1,6 @@
 from typing import Any
 
-from ...utils import echo, echo_error, set_colors, success
+from ...utils import echo, echo_error, set_colors, success, validate_remote
 from .config_manager import CONFIG_FILE, load_config, update_config
 
 PARAM_KEY = "parameters"
