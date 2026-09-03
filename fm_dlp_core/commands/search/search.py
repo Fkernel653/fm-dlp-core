@@ -4,6 +4,8 @@ from collections.abc import Generator
 from typing import final
 
 from ...utils.colors import set_colors
+from .formatters import ResultFormatter
+from .providers import YouTubeMusicProvider, YouTubeProvider
 
 
 @final
@@ -62,8 +64,12 @@ class Search:
 
         set_colors(color)
 
-        self.color = color
         self.error_prefix = "Search Error: "
+        self.formatter = ResultFormatter(color, self.error_prefix)
+        self.yt_provider = YouTubeProvider(color, self.error_prefix, self.formatter)
+        self.ytm_provider = YouTubeMusicProvider(
+            color, self.error_prefix, self.formatter
+        )
 
     def search(self) -> Generator[str, None, None] | str:
         """
@@ -82,16 +88,10 @@ class Search:
             Generator[str, None, None] | str: A generator yielding search results,
                 or an empty string if an error occurs with YouTube provider.
         """
-        from .formatters import ResultFormatter
-        from .providers import YouTubeMusicProvider, YouTubeProvider
-
-        formatter = ResultFormatter(self.color, self.error_prefix)
 
         if self.yt_video:
             try:
-                yt_provider = YouTubeProvider(self.color, self.error_prefix, formatter)
-
-                yield from yt_provider.search(
+                yield from self.yt_provider.search(
                     self.query,
                     self.limit,
                     self.is_track,
@@ -105,10 +105,7 @@ class Search:
             from urllib3.exceptions import ReadTimeoutError
 
             try:
-                ytm_provider = YouTubeMusicProvider(
-                    self.color, self.error_prefix, formatter
-                )
-                yield from ytm_provider.search(
+                yield from self.ytm_provider.search(
                     self.query,
                     self.limit,
                     self.is_track,
@@ -120,9 +117,9 @@ class Search:
                 ReadTimeout,
                 TimeoutError,
             ):
-                yield formatter.fmt_error("Connection timeout")
+                yield self.formatter.fmt_error("Connection timeout")
             except Exception as e:
-                yield formatter.fmt_error(str(e))
+                yield self.formatter.fmt_error(str(e))
 
 
 def search(

@@ -3,6 +3,8 @@
 from pathlib import Path
 from typing import final
 
+from ...utils import echo, echo_error, info
+
 
 @final
 class URLParser:
@@ -45,8 +47,6 @@ class URLParser:
             SystemExit: If the file cannot be read due to encoding or I/O errors,
                 with an appropriate error message printed to stderr.
         """
-        from ...utils import echo, echo_error, info
-
         urls_from_file: list[str] = []
 
         try:

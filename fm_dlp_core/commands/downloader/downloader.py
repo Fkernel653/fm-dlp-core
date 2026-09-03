@@ -2,6 +2,7 @@
 
 import asyncio
 from collections.abc import AsyncIterator
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from types import TracebackType
 
 from ...utils import (
@@ -62,8 +63,6 @@ class Download:
             ProcessPoolExecutor | ThreadPoolExecutor: An executor instance suitable
                 for the current download task type.
         """
-        from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-
         if self.only_video or self.codec in VIDEO_CONTAINERS:
             return ProcessPoolExecutor(max_workers=self.jobs)
         else:
