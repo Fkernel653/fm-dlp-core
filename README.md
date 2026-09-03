@@ -891,7 +891,7 @@ The `quality` parameter supports the following formats:
 | `get_parameters`          | `utils.config.parametrs` | Load download parameters    |
 | `set_path`                | `utils.config.path`      | Set download directory      |
 | `get_path`                | `utils.config.path`      | Get download directory      |
-| `echo`                    | `utils`                  | Print with color support    |
+| `echo`                    | `utils.output`           | Print with color support    |
 | `success/error/info/hint` | `utils.colors`           | Formatted colored messages  |
 
 ---
