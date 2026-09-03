@@ -5,13 +5,13 @@ This module defines supported codecs, container formats, and mappings
 used throughout the application for media processing and validation.
 """
 
-AUDIO_CODECS = {"mp3", "aac", "flac", "m4a", "opus", "vorbis", "wav", "alac"}
-"""Set of supported audio codec formats."""
+AUDIO_CODECS = ("mp3", "aac", "flac", "m4a", "opus", "vorbis", "wav", "alac")
+"""Tuple of supported audio codec formats."""
 
-VIDEO_CONTAINERS = {"mp4", "mov", "mkv", "webm", "avi", "flv"}
-"""Set of supported video container formats."""
+VIDEO_CONTAINERS = ("mp4", "mov", "mkv", "webm", "avi", "flv")
+"""Tuple of supported video container formats."""
 
-ALL_CODECS = AUDIO_CODECS | VIDEO_CONTAINERS
+ALL_CODECS = AUDIO_CODECS + VIDEO_CONTAINERS
 """Union of all supported audio codecs and video containers."""
 
 VIDEO_CONTAINER_AUDIO_MAP: dict[str, str] = {
@@ -29,9 +29,9 @@ When extracting audio from a video file, this map determines which audio
 codec to use as the default output format for each container type.
 """
 
-VALID_REMOTE_SOURCES = {"ejs:github", "ejs:npm", None}
+VALID_REMOTE_SOURCES = ("ejs:github", "ejs:npm", None)
 """
-Set of valid remote source identifiers for template or package fetching.
+Tuple of valid remote source identifiers for template or package fetching.
 
 Valid values:
     - "ejs:github": Fetch from GitHub repository
