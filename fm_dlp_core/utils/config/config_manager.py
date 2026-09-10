@@ -35,8 +35,77 @@ def get_config_dir(dir_name: str = "fm-dlp") -> str:
     return str(d / dir_name)
 
 
-CONFIG_DIR: str = get_config_dir()
-CONFIG_FILE: Path = Path(CONFIG_DIR) / "config.toml"
+CONFIG_DIR = get_config_dir()
+CONFIG_FILE = Path(CONFIG_DIR) / "config.toml"
+
+
+class ConfigManager:
+    """
+    Manage application configuration stored in a TOML file.
+
+    This class is responsible for loading and updating the configuration
+    file located in the platform-specific user configuration directory.
+    Loading is cached with ``lru_cache`` for performance, and the cache is
+    automatically invalidated whenever the configuration is updated.
+
+    Attributes:
+        color (bool): Whether colored output is enabled for messages.
+
+    Example:
+        >>> manager = ConfigManager(color=True)
+        >>> config = manager.load_config()
+        >>> config["path"] = "/downloads"
+        >>> manager.update_config(config)
+        True
+    """
+
+    def __init__(self, color: bool = True):
+        self.color = color
+        set_colors(self.color)
+
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def load_config() -> dict[str, Any]:
+        """
+        Load configuration from the TOML file with caching for performance.
+
+        Args:
+            color (bool): Enable colored output for error messages when the config
+                          file is corrupted.
+
+        Returns:
+            dict: Parsed configuration dictionary, or empty dict if the file doesn't
+                  exist or is corrupted.
+        """
+        if not CONFIG_FILE.exists():
+            return {}
+        try:
+            content = CONFIG_FILE.read_text(ENCODING)
+            return tomllib.loads(content)
+        except (tomllib.TOMLDecodeError, OSError):
+            echo(
+                error("Config file is corrupted. Creating new one..."), file=sys.stderr
+            )
+            return {}
+
+    def update_config(self, data: dict[str, Any]) -> bool:
+        """
+        Update configuration data to the TOML file, creating directories if needed.
+
+        Args:
+            data (dict): Dictionary containing the complete configuration data to write.
+
+        Returns:
+            bool: True if the configuration was updated successfully, False if an error occurred.
+        """
+        try:
+            CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+            toml_content = TOMLSerializer.dumps(data)
+            _ = CONFIG_FILE.write_text(toml_content, ENCODING)
+            self.load_config.cache_clear()
+            return True
+        except (PermissionError, OSError):
+            return False
 
 
 class TOMLSerializer:
@@ -104,47 +173,3 @@ class TOMLSerializer:
             return f"{{ {', '.join(items)} }}"
         else:
             return str(value)
-
-
-@lru_cache(maxsize=1)
-def load_config(color: bool) -> dict[str, Any]:
-    """
-    Load configuration from the TOML file with caching for performance.
-
-    Args:
-        color (bool): Enable colored output for error messages when the config
-                      file is corrupted.
-
-    Returns:
-        dict: Parsed configuration dictionary, or empty dict if the file doesn't
-              exist or is corrupted.
-    """
-    if not CONFIG_FILE.exists():
-        return {}
-    try:
-        content = CONFIG_FILE.read_text(ENCODING)
-        return tomllib.loads(content)
-    except (tomllib.TOMLDecodeError, OSError):
-        set_colors(color)
-        echo(error("Config file is corrupted. Creating new one..."), file=sys.stderr)
-        return {}
-
-
-def update_config(data: dict[str, Any]) -> bool:
-    """
-    Update configuration data to the TOML file, creating directories if needed.
-
-    Args:
-        data (dict): Dictionary containing the complete configuration data to write.
-
-    Returns:
-        bool: True if the configuration was updated successfully, False if an error occurred.
-    """
-    try:
-        CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-        toml_content = TOMLSerializer.dumps(data)
-        _ = CONFIG_FILE.write_text(toml_content, ENCODING)
-        load_config.cache_clear()
-        return True
-    except (PermissionError, OSError):
-        return False

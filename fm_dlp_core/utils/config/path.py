@@ -10,93 +10,88 @@ from ...utils import (
     set_colors,
     styled,
 )
-from .config_manager import CONFIG_FILE, load_config, update_config
-
-PATH_KEY = "path"
+from .config_manager import CONFIG_FILE, ConfigManager
 
 
-def set_path(
-    path: str,
-    color: bool = True,
-) -> str:
+class PathManager:
     """
-    Set and save the download directory path to persistent configuration.
+    Manage the download path stored in the configuration file.
 
-    Validates the provided path by:
-    1. Resolving it to an absolute path (expanding ~ and resolving symlinks)
-    2. Checking that it exists and is a directory
-    3. Creating parent directories if they don't exist
+    This class provides methods to read and write the ``path`` key of the
+    application's TOML configuration. When no configuration file exists,
+    the user's home directory is used as a fallback.
 
-    If validation passes, saves the path to the configuration file under the
-    `path` key. If validation fails, exits with an error message.
+    Attributes:
+        PATH_KEY (str): The configuration key under which the path is stored.
+        color (bool): Whether colored output is enabled for messages.
+        config_manager (ConfigManager): The underlying configuration manager.
 
-    Args:
-        path (str): Directory path for downloads. Can be absolute or relative,
-                    and may include ~ for home directory expansion.
-        color (bool): Enable colored output in success/error messages. (default: True)
-
-    Returns:
-        str: Success message indicating the path was saved, including the
-             configured path and config file location.
-
-    Raises:
-        SystemExit: If the path doesn't exist, is not a directory, or if
-                    permission is denied when writing to the config file.
+    Example:
+        >>> manager = PathManager(color=True)
+        >>> manager.set_path("~/Downloads")
+        'Configuration saved successfully'
+        >>> manager.get_path()
+        '/home/user/Downloads'
     """
-    set_colors(color)
-    try:
-        input_path = str(Path(path).expanduser().resolve())
 
-        if not Path(input_path).is_dir():
-            echo_error("Please enter the correct path!")
+    PATH_KEY = "path"
 
-        config = load_config(color)
-        config[PATH_KEY] = input_path
+    def __init__(self, color: bool = True):
+        self.color = color
+        self.config_manager = ConfigManager(color)
+        set_colors(self.color)
 
-        if not update_config(config):
-            raise PermissionError()
+    def set_path(self, path: str) -> str:
+        """
+        Validate and save the download path to the configuration file.
 
-        return styled("Configuration saved successfully", BOLD_GREEN)
+        Args:
+            path (str): The path to the download directory. Tilde (``~``) is expanded.
 
-    except PermissionError:
-        return error(f"Permission denied! Cannot write to {CONFIG_FILE}")
-    except OSError as e:
-        return error(f"Error saving configuration: {e}")
+        Returns:
+            str: A success message if the path was saved, or an error message otherwise.
+        """
+        try:
+            input_path = str(Path(path).expanduser().resolve())
 
+            if not Path(input_path).is_dir():
+                echo_error("Please enter the correct path!")
+                raise SystemExit(1)
 
-def get_path(
-    color: bool = True,
-) -> str:
-    """
-    Get the configured download directory path from persistent storage.
+            config = self.config_manager.load_config()
+            config[self.PATH_KEY] = input_path
 
-    Returns the saved path from the configuration file or defaults to the
-    user's home directory if no configuration exists. If a saved path exists
-    but is invalid (doesn't exist or is not a directory), exits with an error.
+            if not self.config_manager.update_config(config):
+                raise PermissionError()
 
-    This function is typically called when the user hasn't explicitly specified
-    a download path via command-line arguments, allowing the saved preference
-    to be used automatically.
+            return styled("Configuration saved successfully", BOLD_GREEN)
 
-    Args:
-        color (bool): Enable colored output in info and error messages. (default: True)
+        except PermissionError:
+            return error(f"Permission denied! Cannot write to {CONFIG_FILE}")
+        except OSError as e:
+            return error(f"Error saving configuration: {e}")
 
-    Returns:
-        str: The resolved download directory path as an absolute string.
+    def get_path(self) -> str:
+        """
+        Retrieve the download path from the configuration file.
 
-    Raises:
-        SystemExit: If the saved path doesn't exist or is not a directory.
-    """
-    if not CONFIG_FILE.exists():
-        echo(info("Home directory is used!"))
-        echo(hint("Run the 'config' command to configure the download path\n"))
-        return str(Path.home())
+        If no configuration file exists, the user's home directory is returned
+        along with an informational hint. If the stored path is missing or no
+        longer a valid directory, the process exits with an error.
 
-    data = load_config(color)
-    download_path = str(data.get(PATH_KEY))
+        Returns:
+            str: The resolved download directory path.
+        """
+        if not CONFIG_FILE.exists():
+            echo(info("Home directory is used!"))
+            echo(hint("Run the 'config' command to configure the download path\n"))
+            return str(Path.home())
 
-    if not download_path or not Path(download_path).is_dir():
-        set_colors(color)
-        echo_error("Download path does not exist.")
+        data = self.config_manager.load_config()
+        download_path = str(data.get(self.PATH_KEY))
 
-    return download_path
+        if not download_path or not Path(download_path).is_dir():
+            echo_error("Download path does not exist.")
+            raise SystemExit(1)
+
+        return download_path

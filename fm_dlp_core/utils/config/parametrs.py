@@ -1,134 +1,155 @@
 from typing import Any
 
 from ...utils import echo, echo_error, set_colors, success, validate_remote
-from .config_manager import CONFIG_FILE, load_config, update_config
-
-PARAM_KEY = "parameters"
+from .config_manager import CONFIG_FILE, ConfigManager
 
 
-def _if_quiet(
-    quiet: bool,
-    text: str,
-    error_result: bool | None = None,
-    success_result: bool | None = None,
-) -> None:
-    if not quiet:
-        if error_result:
-            echo_error(text)
-        elif success_result:
-            echo(success(text))
-        else:
-            echo(text)
-
-
-def set_parameters(
-    codec: str,
-    kbps: int,
-    quality: str,
-    jobs: int,
-    quiet: bool,
-    metadata: bool,
-    keep: bool,
-    only_video: bool,
-    cookies: str | None,
-    remote: str | None,
-    color: bool = True,
-) -> bool:
+class ParametersManager:
     """
-    Save download parameters to configuration file without overwriting other settings.
+    Manage download parameters stored in the configuration file.
 
-    This function updates only the `parameters` section of the config, preserving
-    any other settings (such as the download path) that may already exist in the
-    configuration file. Parameters are saved under the `PARAM_KEY` ("parameters")
-    key in the TOML config structure.
+    This class provides methods to read and write the ``[parameters]``
+    section of the application's TOML configuration. It handles codec,
+    bitrate, quality, job count, and various boolean flags, as well as
+    optional cookies and remote URL values.
 
-    Args:
-        codec (str): Audio codec (e.g., "mp3", "m4a", "flac") or video container
-                     (e.g., "mp4", "mkv", "webm").
-        kbps (int): Audio bitrate in kbps (e.g., 128, 192, 320).
-        quality (str): Video quality preset ("best", "worst", "1080p", "720p",
-                              "480p", "360p", "2160p").
-        jobs (int): Maximum number of concurrent downloads to run in parallel.
-        quiet (bool): Suppress yt-dlp output and verbose logging.
-        metadata (bool): Embed metadata tags and thumbnail into the output file.
-        keep (bool): Keep the original downloaded file after conversion.
-        only_video (bool): Download video stream only (no audio).
-        cookies (str | None): Path to cookies file or browser name for authentication.
-        remote (str | None): External JavaScript components source for bypassing anti-bot protections.
-                                 Valid values: "ejs:github", "ejs:npm", or ""/None to disable.
-                                 Saved to config and auto-applied to future downloads.
-        color (bool): Enable colored output in success/error messages. (default: True)
+    Attributes:
+        PARAM_KEY (str): The configuration key under which parameters are stored.
+        color (bool): Whether colored output is enabled for messages.
+        config_manager (ConfigManager): The underlying configuration manager.
 
-    Returns:
-        bool: True if parameters were saved successfully, False if an error occurred
-              (permission denied, I/O error, or corrupted config).
+    Example:
+        >>> manager = ParametersManager(color=True)
+        >>> manager.set_parameters(
+        ...     codec="mp3",
+        ...     kbps=320,
+        ...     quality="high",
+        ...     jobs=4,
+        ...     quiet=False,
+        ...     metadata=True,
+        ...     keep=False,
+        ...     only_video=False,
+        ... )
+        True
+        >>> manager.get_parameters()["codec"]
+        'mp3'
     """
-    set_colors(color)
 
-    try:
-        config = load_config(color)
+    PARAM_KEY = "parameters"
 
-        params = {
-            "codec": codec,
-            "kbps": kbps,
-            "quality": quality,
-            "jobs": jobs,
-            "quiet": quiet,
-            "metadata": metadata,
-            "keep": keep,
-            "only_video": only_video,
-        }
+    def __init__(self, color: bool = True):
+        self.color = color
+        self.config_manager = ConfigManager(color)
+        set_colors(self.color)
 
-        if cookies:
-            params["cookies"] = cookies
+    def set_parameters(
+        self,
+        codec: str,
+        kbps: int,
+        quality: str,
+        jobs: int,
+        quiet: bool,
+        metadata: bool,
+        keep: bool,
+        only_video: bool,
+        cookies: str | None = None,
+        remote: str | None = None,
+    ) -> bool:
+        """
+        Write download parameters to the configuration file.
 
-        if remote:
-            _ = validate_remote(remote)
-            params["remote"] = remote
+        Args:
+            codec (str): Audio codec to use.
+            kbps (int): Bitrate in kilobits per second.
+            quality (str): Desired download quality.
+            jobs (int): Number of parallel download jobs.
+            quiet (bool): Suppress informational output when True.
+            metadata (bool): Whether to embed metadata.
+            keep (bool): Whether to keep intermediate files.
+            only_video (bool): Whether to download only the video stream.
+            cookies (str | None, optional): Path to a cookies file. Defaults to None.
+            remote (str | None, optional): Remote URL to validate and store. Defaults to None.
 
-        config[PARAM_KEY] = params
+        Returns:
+            bool: True if the parameters were saved successfully, False otherwise.
+        """
+        try:
+            config = self.config_manager.load_config()
 
-        if not update_config(config):
-            raise PermissionError()
+            params = {
+                "codec": codec,
+                "kbps": kbps,
+                "quality": quality,
+                "jobs": jobs,
+                "quiet": quiet,
+                "metadata": metadata,
+                "keep": keep,
+                "only_video": only_video,
+            }
 
-        _if_quiet(quiet, "Parameters have been successfully saved", success_result=True)
-        return True
+            if cookies:
+                params["cookies"] = cookies
 
-    except PermissionError:
-        _if_quiet(
-            quiet,
-            f"Permission denied! Cannot write to {CONFIG_FILE}",
-            error_result=True,
-        )
-        return False
-    except OSError as e:
-        _if_quiet(quiet, f"Error saving configuration: {e}", error_result=True)
-        return False
+            if remote:
+                _ = validate_remote(remote)
+                params["remote"] = remote
 
+            config[self.PARAM_KEY] = params
 
-def get_parameters(color: bool = True) -> dict[str, Any]:
-    """
-    Retrieve saved download parameters from the configuration file.
+            if not self.config_manager.update_config(config):
+                raise PermissionError()
 
-    Loads the parameters section from the config TOML file. If the config file
-    doesn't exist or the parameters key is missing, returns an empty dictionary.
-    This allows callers to safely merge saved parameters with current settings.
+            self._if_quiet(
+                quiet, "Parameters have been successfully saved", success_result=True
+            )
+            return True
 
-    Parameters are retrieved under the `PARAM_KEY` ("parameters") key and may
-    include: codec, kbps, quality, jobs, quiet, metadata, keep, only_video,
-    and cookies.
+        except PermissionError:
+            self._if_quiet(
+                quiet,
+                f"Permission denied! Cannot write to {CONFIG_FILE}",
+                error_result=True,
+            )
+            return False
+        except OSError as e:
+            self._if_quiet(quiet, f"Error saving configuration: {e}", error_result=True)
+            return False
 
-    Args:
-        color (bool): Enable colored output for error messages. (default: True)
+    def get_parameters(self) -> dict[str, Any]:
+        """
+        Retrieve download parameters from the configuration file.
 
-    Returns:
-        dict[str, Any]: Dictionary containing saved parameters, or empty dict
-                        if no configuration exists or no parameters are saved.
-    """
-    set_colors(color)
+        Returns:
+            dict[str, Any]: A dictionary of stored parameters, or an empty
+            dictionary if the configuration file does not exist or contains
+            no parameters section.
+        """
+        if not CONFIG_FILE.exists():
+            return {}
 
-    if not CONFIG_FILE.exists():
-        return {}
+        config = self.config_manager.load_config()
+        return config.get(self.PARAM_KEY, {})
 
-    config = load_config(color)
-    return config.get(PARAM_KEY, {})
+    def _if_quiet(
+        self,
+        quiet: bool,
+        text: str,
+        error_result: bool | None = None,
+        success_result: bool | None = None,
+    ) -> None:
+        """
+        Print a message unless quiet mode is enabled.
+
+        Args:
+            quiet (bool): If True, no output is produced.
+            text (str): The message to display.
+            error_result (bool | None, optional): If True, display as an error. Defaults to None.
+            success_result (bool | None, optional): If True, display as a success. Defaults to None.
+        """
+        if not quiet:
+            if error_result:
+                echo_error(text)
+            elif success_result:
+                echo(success(text))
+            else:
+                echo(text)

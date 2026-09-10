@@ -3,7 +3,7 @@
 from typing import Any, final
 
 from ...utils import validate_remote
-from ...utils.config.parametrs import get_parameters, set_parameters
+from ...utils.config.parametrs import ParametersManager
 from .params import DownloadParams
 
 
@@ -14,6 +14,7 @@ class DownloadConfig:
     def __init__(self, params: DownloadParams):
         _ = validate_remote(params.remote)
         self.params = params
+        self.params_manager = ParametersManager(params.color)
 
     def apply_config(self) -> dict[str, Any]:
         """
@@ -30,7 +31,7 @@ class DownloadConfig:
                 metadata, keep, only_video, cookies and remote.
         """
         if self.params.use_config:
-            saved = get_parameters(self.params.color)
+            saved = self.params_manager.get_parameters()
             return {
                 "codec": saved.get("codec", self.params.codec),
                 "kbps": saved.get("kbps", self.params.kbps),
@@ -70,7 +71,7 @@ class DownloadConfig:
                 (no operation needed), False if an error occurred during saving.
         """
         if self.params.save:
-            return set_parameters(
+            return self.params_manager.set_parameters(
                 self.params.codec,
                 self.params.kbps,
                 self.params.quality,
@@ -81,6 +82,5 @@ class DownloadConfig:
                 self.params.only_video,
                 self.params.cookies,
                 self.params.remote,
-                self.params.color,
             )
         return True

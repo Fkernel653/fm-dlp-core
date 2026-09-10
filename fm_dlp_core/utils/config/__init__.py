@@ -19,31 +19,28 @@ Submodules:
     path: Path management for download directories.
 
 Classes:
+    ConfigManager: Loads and updates the TOML configuration file with caching.
+    ParametersManager: Reads and writes download parameters in the config.
+    PathManager: Reads and writes the download path in the config.
     TOMLSerializer: Serializes Python dictionaries to TOML format.
 
 Functions:
     get_config_dir: Get the platform-specific config directory path.
-    update_config: Write configuration data to the TOML file.
-    load_config: Load configuration from the TOML file with caching.
-    get_parameters: Get download parameters from configuration.
-    set_parameters: Set download parameters in configuration.
-    get_path: Get download path from configuration.
-    set_path: Set download path in configuration.
 
 Constants:
     ENCODING: Encoding for writing / reading files.
     CONFIG_DIR: The resolved configuration directory path.
     CONFIG_FILE: The full path to the config.toml file.
-    PARAM_KEY: Key for accessing parameters in configuration.
-    PATH_KEY: Key for accessing path in configuration.
 
 Example:
-    >>> from fm_dlp_core.utils.config import load_config, update_config, get_path
-    >>> config = load_config(color=True)
+    >>> from fm_dlp_core.utils.config import ConfigManager, PathManager
+    >>> manager = ConfigManager(color=True)
+    >>> config = manager.load_config()
     >>> config["path"] = "/downloads"
-    >>> update_config(config)
+    >>> manager.update_config(config)
     True
-    >>> download_path = get_path(config)
+    >>> path_manager = PathManager()
+    >>> path_manager.get_path()
     '/downloads'
 """
 
@@ -51,26 +48,20 @@ from .config_manager import (
     CONFIG_DIR,
     CONFIG_FILE,
     ENCODING,
+    ConfigManager,
     TOMLSerializer,
     get_config_dir,
-    load_config,
-    update_config,
 )
-from .parametrs import PARAM_KEY, get_parameters, set_parameters
-from .path import PATH_KEY, get_path, set_path
+from .parametrs import ParametersManager
+from .path import PathManager
 
 __all__ = [
     "CONFIG_DIR",
     "CONFIG_FILE",
     "ENCODING",
-    "PARAM_KEY",
-    "PATH_KEY",
+    "ConfigManager",
+    "ParametersManager",
+    "PathManager",
     "TOMLSerializer",
     "get_config_dir",
-    "get_parameters",
-    "get_path",
-    "load_config",
-    "set_parameters",
-    "set_path",
-    "update_config",
 ]
