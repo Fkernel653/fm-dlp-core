@@ -29,18 +29,18 @@ class Download:
         self.params = params
         self.config = DownloadConfig(params)
 
-        applied = self.config.apply_config()
+        conf = self.config.apply_config()
 
-        self.codec: str = applied["codec"]
-        self.kbps: int = applied["kbps"]
-        self.quality: str = applied["quality"]
-        self.jobs: int = applied["jobs"]
-        self.quiet: bool = applied["quiet"]
-        self.metadata: bool = applied["metadata"]
-        self.keep: bool = applied["keep"]
-        self.only_video: bool = applied["only_video"]
-        self.cookies: str = applied["cookies"]
-        self.remote: str = applied["remote"]
+        self.codec: str = conf["codec"]
+        self.kbps: int = conf["kbps"]
+        self.quality: str = conf["quality"]
+        self.jobs: int = conf["jobs"]
+        self.quiet: bool = conf["quiet"]
+        self.metadata: bool = conf["metadata"]
+        self.keep: bool = conf["keep"]
+        self.only_video: bool = conf["only_video"]
+        self.cookies: str = conf["cookies"]
+        self.remote: str = conf["remote"]
 
         if not self.config.save_config():
             return
