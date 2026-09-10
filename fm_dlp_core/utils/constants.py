@@ -14,7 +14,7 @@ VIDEO_CONTAINERS = ("mp4", "mov", "mkv", "webm", "avi", "flv")
 ALL_CODECS = AUDIO_CODECS + VIDEO_CONTAINERS
 """Union of all supported audio codecs and video containers."""
 
-VIDEO_CONTAINER_AUDIO_MAP: dict[str, str] = {
+VIDEO_CONTAINER_AUDIO_MAP = {
     "mp4": "m4a",
     "mov": "m4a",
     "mkv": "opus",
