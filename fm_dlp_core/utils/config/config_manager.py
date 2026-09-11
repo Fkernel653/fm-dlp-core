@@ -1,6 +1,7 @@
+import sys
 from pathlib import Path
 
-from ...utils import echo, error, set_colors, sys
+from ...utils import echo, error, set_colors
 
 
 class ConfigManager:
