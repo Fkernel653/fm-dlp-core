@@ -1,9 +1,6 @@
-"""Search providers for YouTube and YouTube Music."""
-
 from abc import ABC, abstractmethod
 from collections.abc import Generator
-from itertools import islice
-from typing import Any, override
+from typing import Any
 
 from .formatters import ResultFormatter
 
@@ -23,12 +20,8 @@ class BaseProvider(ABC):
     invalid entries, and yield formatted output or raw data based on flags.
     """
 
-    formatter: ResultFormatter
-
-    def __init__(
-        self, color: bool, error_prefix: str, formatter: ResultFormatter | None = None
-    ):
-        self.formatter = formatter or ResultFormatter(color, error_prefix)
+    def __init__(self, color: bool):
+        self.formatter = ResultFormatter(color)
 
     @abstractmethod
     def _extract_results(self, query: str, limit: int, is_track: bool) -> list[Any]:
@@ -84,6 +77,8 @@ class BaseProvider(ABC):
             yield self._get_empty_message(query, is_track)
             return
 
+        from itertools import islice
+
         if raw:
             for entry in islice(results, limit):
                 yield str(entry) + "\n"
@@ -133,24 +128,20 @@ class YouTubeProvider(BaseProvider):
         search_type = "video" if is_track else "playlist"
         return f"ytsearch{limit}:{search_type}:{query}"
 
-    @override
     def _extract_results(self, query: str, limit: int, is_track: bool) -> list[Any]:
-        from ...utils import get_ytdlp
+        from yt_dlp import YoutubeDL
 
-        YoutubeDL = get_ytdlp()
         with YoutubeDL(self._ytdl_opts()) as ydl:
             info = ydl.extract_info(
                 self._build_search_query(query, limit, is_track), download=False
             )
             return info.get("entries", [])
 
-    @override
     def _extract_url(self, entry: dict[str, Any], is_track: bool) -> str | None:
         if v_id := entry.get("id"):
             return "https://youtu.be/" + v_id
         return None
 
-    @override
     def _fmt_entry(self, entry: dict[str, Any], num: int, is_track: bool) -> str | None:
         return self.formatter.fmt_result(
             num,
@@ -163,7 +154,6 @@ class YouTubeProvider(BaseProvider):
             duration=self.formatter.fmt_duration(entry.get("duration")),
         )
 
-    @override
     def _get_empty_message(self, query: str, is_track: bool) -> str:
         return f"No videos matching '{query}'\n"
 
@@ -178,14 +168,12 @@ class YouTubeMusicProvider(BaseProvider):
     Both result types include a URL to the content on music.youtube.com.
     """
 
-    @override
     def _extract_results(self, query: str, limit: int, is_track: bool) -> list[Any]:
         from ytmusicapi import YTMusic
 
         search_type = "songs" if is_track else "albums"
         return YTMusic().search(query=query, limit=limit, filter=search_type)
 
-    @override
     def _extract_url(self, entry: dict[str, Any], is_track: bool) -> str | None:
         if is_track and (t_id := entry.get("videoId")):
             return "https://music.youtube.com/watch?v=" + t_id
@@ -193,7 +181,6 @@ class YouTubeMusicProvider(BaseProvider):
             return "https://music.youtube.com/playlist?list=" + pl_id
         return None
 
-    @override
     def _fmt_entry(self, entry: dict[str, Any], num: int, is_track: bool) -> str | None:
         if is_track:
             return self.formatter.fmt_result(
@@ -218,7 +205,6 @@ class YouTubeMusicProvider(BaseProvider):
                 year=entry.get("year", "N/A"),
             )
 
-    @override
     def _get_empty_message(self, query: str, is_track: bool) -> str:
         result_type = "tracks" if is_track else "albums"
         return f"No {result_type} found for '{query}'\n"

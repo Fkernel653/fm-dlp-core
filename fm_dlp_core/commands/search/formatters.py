@@ -1,21 +1,18 @@
-"""Result formatting utilities for search results."""
-
-from ...utils.colors import BOLD_CYAN, BOLD_RED, BOLD_WHITE, GRAY, RESET, WHITE
+from ...utils.colors import BOLD_CYAN, BOLD_RED, BOLD_WHITE, GRAY, RESET
 
 
 class ResultFormatter:
     """Format search results with optional metadata and colors."""
 
-    def __init__(self, color: bool, error_prefix: str):
+    def __init__(self, color: bool):
         """Initialize formatter with color settings."""
         self.color = color
-        self.error_prefix = error_prefix
         self._c = {
             "bold_cyan": BOLD_CYAN if color else "",
             "bold_red": BOLD_RED if color else "",
             "bold_white": BOLD_WHITE if color else "",
             "gray": GRAY if color else "",
-            "white": WHITE if color else "",
+            "white": "\033[0;37m" if color else "",
             "reset": RESET if color else "",
         }
 
@@ -99,7 +96,7 @@ class ResultFormatter:
         url: str | None,
         is_yt_video: bool,
         is_track: bool,
-        **kwargs: dict[str, str | int | float],
+        **kwargs: str | dict[str, str | int | float],
     ) -> str:
         """
         Format a single search result with a structured tree-like layout.
@@ -181,4 +178,4 @@ class ResultFormatter:
         Returns:
             str: A formatted error string with color codes if enabled.
         """
-        return self._c["bold_red"] + self.error_prefix + self._c["reset"] + error
+        return self._c["bold_red"] + "Search Error: " + self._c["reset"] + error

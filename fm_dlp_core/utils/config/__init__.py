@@ -9,9 +9,6 @@ in a platform-specific user config directory:
 - macOS: ~/Library/Application Support/fm-dlp/config.toml
 - Linux: $XDG_CONFIG_HOME/fm-dlp/config.toml or ~/.config/fm-dlp/config.toml
 
-The configuration is cached for performance using LRU caching, with automatic
-cache invalidation on updates.
-
 Submodules:
     config_manager: Core configuration management including file I/O and TOML
                     serialization.
@@ -23,14 +20,6 @@ Classes:
     ParametersManager: Reads and writes download parameters in the config.
     PathManager: Reads and writes the download path in the config.
     TOMLSerializer: Serializes Python dictionaries to TOML format.
-
-Functions:
-    get_config_dir: Get the platform-specific config directory path.
-
-Constants:
-    ENCODING: Encoding for writing / reading files.
-    CONFIG_DIR: The resolved configuration directory path.
-    CONFIG_FILE: The full path to the config.toml file.
 
 Example:
     >>> from fm_dlp_core.utils.config import ConfigManager, PathManager
@@ -45,23 +34,15 @@ Example:
 """
 
 from .config_manager import (
-    CONFIG_DIR,
-    CONFIG_FILE,
-    ENCODING,
     ConfigManager,
     TOMLSerializer,
-    get_config_dir,
 )
 from .parametrs import ParametersManager
 from .path import PathManager
 
 __all__ = [
-    "CONFIG_DIR",
-    "CONFIG_FILE",
-    "ENCODING",
     "ConfigManager",
     "ParametersManager",
     "PathManager",
     "TOMLSerializer",
-    "get_config_dir",
 ]

@@ -1,14 +1,8 @@
-"""YouTube search handlers."""
-
 from collections.abc import Generator
-from typing import final
 
 from ...utils.colors import set_colors
-from .formatters import ResultFormatter
-from .providers import YouTubeMusicProvider, YouTubeProvider
 
 
-@final
 class Search:
     """
     Handles searching across YouTube and YouTube Music with unified interface.
@@ -61,15 +55,9 @@ class Search:
         self.raw = raw
         self.only_url = only_url
         self.is_track = not album
+        self.color = color
 
         set_colors(color)
-
-        self.error_prefix = "Search Error: "
-        self.formatter = ResultFormatter(color, self.error_prefix)
-        self.yt_provider = YouTubeProvider(color, self.error_prefix, self.formatter)
-        self.ytm_provider = YouTubeMusicProvider(
-            color, self.error_prefix, self.formatter
-        )
 
     def search(self) -> Generator[str, None, None] | str:
         """
@@ -88,10 +76,14 @@ class Search:
             Generator[str, None, None] | str: A generator yielding search results,
                 or an empty string if an error occurs with YouTube provider.
         """
+        from .providers import YouTubeMusicProvider, YouTubeProvider
+
+        yt_provider = YouTubeProvider(self.color)
+        ytm_provider = YouTubeMusicProvider(self.color)
 
         if self.yt_video:
             try:
-                yield from self.yt_provider.search(
+                yield from yt_provider.search(
                     self.query,
                     self.limit,
                     self.is_track,
@@ -104,8 +96,12 @@ class Search:
             from requests.exceptions import ReadTimeout
             from urllib3.exceptions import ReadTimeoutError
 
+            from .formatters import ResultFormatter
+
+            formatter = ResultFormatter(self.color)
+
             try:
-                yield from self.ytm_provider.search(
+                yield from ytm_provider.search(
                     self.query,
                     self.limit,
                     self.is_track,
@@ -117,9 +113,9 @@ class Search:
                 ReadTimeout,
                 TimeoutError,
             ):
-                yield self.formatter.fmt_error("Connection timeout")
+                yield formatter.fmt_error("Connection timeout")
             except Exception as e:
-                yield self.formatter.fmt_error(str(e))
+                yield formatter.fmt_error(str(e))
 
 
 def search(

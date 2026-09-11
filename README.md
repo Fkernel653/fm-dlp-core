@@ -10,22 +10,6 @@
 
 ---
 
-## ✨ Key Features
-
-| Feature                     | Description                                                                 |
-| --------------------------- | --------------------------------------------------------------------------- |
-| 🎵 **Audio Extraction**     | Extract audio in 8 formats: MP3, AAC, FLAC, M4A, Opus, Vorbis, WAV, ALAC    |
-| 🎬 **Video Download**       | Download videos in MP4, MKV, WebM, MOV, AVI, FLV with quality selection     |
-| 🔍 **Search**               | Search YouTube videos and YouTube Music tracks/albums with formatted output |
-| ⚡ **Concurrent Downloads** | Download multiple files in parallel with configurable job limits            |
-| 🏷️ **Metadata Embedding**   | Automatically embed tags and thumbnails into audio files                    |
-| 🔐 **Authentication**       | Support for cookies (file or browser) to access restricted content          |
-| 💾 **Persistent Config**    | Save and load download preferences across sessions                          |
-| 🎨 **Colored Output**       | Beautiful terminal output with ANSI colors (toggleable)                     |
-| 🔌 **Extensible**           | Create custom search providers for any platform                             |
-
----
-
 ## 📋 Table of Contents
 
 - [Quick Start](#-quick-start)
@@ -35,10 +19,8 @@
 - [Downloading Content](#-downloading-content)
 - [Searching Content](#-searching-content)
 - [Configuration](#-configuration)
-- [Advanced Topics](#-advanced-topics)
 - [API Reference](#-api-reference)
-- [Examples](#-examples)
-- [License](#-license)
+- [License & Acknowledgments](#-license--acknowledgments)
 
 ---
 
@@ -187,7 +169,7 @@ The downloader automatically selects the appropriate executor type:
 This optimization is handled automatically based on the `only_video` flag and `codec` selection.
 
 <details>
-<summary><b>📘 Click for examples</b></summary>
+<summary><b>📖 Click for examples</b></summary>
 
 **Basic Usage with run_downloader**
 
@@ -259,37 +241,6 @@ async with Download(params) as downloader:
     await downloader.download_all()
 ```
 
----
-
-**Manual Configuration Management**
-
-```python
-from fm_dlp_core.commands.downloader import DownloadConfig, DownloadParams
-
-params = DownloadParams(
-    url="https://youtube.com/watch?v=...",
-    codec="mp3",
-    kbps=320,
-    quality="best",
-    jobs=4,
-    quiet=False,
-    metadata=True,
-    keep=False,
-    save=True,  # Save to config
-    use_config=True,  # Load from config
-    path="./downloads",
-    only_video=False,
-    cookies="chrome",
-    remote="ejs:github",
-    color=True,
-)
-
-# Config will automatically handle save/load based on params
-config = DownloadConfig(params)
-applied_params = config.apply_config()  # Returns dict with merged params
-config.save_config()  # Saves if save=True
-```
-
 </details>
 
 ---
@@ -327,7 +278,7 @@ The search system supports:
 | **Raw Data**  | `raw=True`                  | Python dictionaries with full metadata |
 
 <details>
-<summary><b>📘 Click for examples</b></summary>
+<summary><b>📖 Click for examples</b></summary>
 
 **YouTube Music Search (Tracks)**
 
@@ -340,20 +291,6 @@ for result in search(
     yt_video=False,  # Use YouTube Music
     album=False,  # Search for tracks
     color=True,
-):
-    print(result)
-```
-
----
-
-**YouTube Music Search (Albums)**
-
-```python
-for result in search(
-    query="Draining Love Story",
-    limit=3,
-    yt_video=False,
-    album=True,  # Search for albums
 ):
     print(result)
 ```
@@ -386,15 +323,6 @@ if urls:
     asyncio.run(run_downloader(url=" ".join(urls), codec="mp3", kbps=320))
 ```
 
----
-
-**Raw Data Output**
-
-```python
-for data in search("Goreshit", limit=2, raw=True):
-    print(data["title"], data["url"])
-```
-
 </details>
 
 ---
@@ -410,7 +338,6 @@ The configuration system provides:
 - **Download path** — Set default download directory (stored separately)
 - **TOML format** — Human-readable config file
 - **Cookie support** — Browser cookies for restricted content
-- **Automatic config management** — TOML serialization and caching for performance
 
 ### Configuration File Location
 
@@ -447,13 +374,6 @@ config["path"] = "/downloads"
 manager.update_config(config)  # Returns True on success
 ```
 
-**Key behaviors:**
-
-- `load_config()` is a `@staticmethod` wrapped with `@lru_cache(maxsize=1)` — repeated reads hit the in-memory cache instead of disk
-- `update_config()` calls `self.load_config.cache_clear()` after a successful write, so the next read reflects the new data
-- Corrupted TOML files are handled gracefully: an error is printed and an empty dict is returned
-- Missing config files return an empty dict without raising
-
 ### TOMLSerializer Class
 
 The `TOMLSerializer` class converts Python data structures into TOML string representation. It is used internally by `ConfigManager.update_config()`.
@@ -482,9 +402,8 @@ print(toml_string)
 | Python Type | TOML Output         |
 | ----------- | ------------------- |
 | `str`       | `"value"`           |
-| `bool`      | `true` / `false`    |
-| `int`       | `42`                |
-| `list`      | `[item1, item2]`    |
+| `int`       | `value`             |
+| `bool`      | `true`              |
 | `dict`      | `{ key = "value" }` |
 
 ### ParametersManager Class
@@ -540,18 +459,10 @@ manager.get_path()
 # Returns: '/home/user/Downloads'
 ```
 
-**Key behaviors:**
-
-- `PATH_KEY = "path"` — the top-level TOML key
-- `set_path()` expands `~`, resolves to absolute, and validates that the directory exists
-- `get_path()` returns `Path.home()` with an info hint if no config file exists
-- Exits with code 1 if the stored path is missing or no longer a valid directory
-
 ### Configuration Functions
 
 | Function                                | Module                   | Description                              |
 | --------------------------------------- | ------------------------ | ---------------------------------------- |
-| `get_config_dir()`                      | `utils.config_manager`   | Get OS-specific config directory path    |
 | `ConfigManager.load_config()`           | `utils.config_manager`   | Load config from TOML file with caching  |
 | `ConfigManager.update_config()`         | `utils.config_manager`   | Update config file, creating directories |
 | `ParametersManager.set_parameters(...)` | `utils.config.parametrs` | Save download parameters                 |
@@ -567,25 +478,21 @@ manager.get_path()
    - macOS: Uses `~/Library/Application Support`
    - Linux: Uses `XDG_CONFIG_HOME` or `~/.config`
 
-2. **Caching for Performance**
-   - Configuration is cached using `@lru_cache(maxsize=1)`
-   - Cache is automatically cleared when configuration is updated
-
-3. **Error Handling**
+2. **Error Handling**
    - Gracefully handles corrupted config files with colored error messages
    - Automatically creates new config file if corrupted or missing
    - Permission errors and OS errors are caught and reported
 
-4. **Atomic Operations**
+3. **Atomic Operations**
    - Configuration file operations create parent directories as needed
    - Writes are performed via `Path.write_text()` with UTF-8 encoding
 
 ### Configuration Profiles
 
-The configuration system supports multiple profiles using the `color` parameter as the key. This allows you to maintain different presets (e.g., "default", "high-quality", "video-only") and switch between them.
+The configuration system supports multiple profiles using the `color` parameter as the key.
 
 <details>
-<summary><b>📘 Click for examples</b></summary>
+<summary><b>📖 Click for examples</b></summary>
 
 **Loading Configuration with Caching**
 
@@ -594,7 +501,6 @@ from fm_dlp_core.utils.config import ConfigManager
 
 manager = ConfigManager(color=True)
 
-# Load configuration (cached for performance)
 config = manager.load_config()
 print(config)  # {'path': '/downloads', 'parameters': {...}}
 
@@ -613,50 +519,6 @@ success = manager.update_config(new_config)
 if success:
     print("Configuration updated successfully")
     # Cache is automatically cleared
-```
-
-**Manual Configuration File Management**
-
-```python
-from fm_dlp_core.utils.config import (
-    CONFIG_DIR,
-    CONFIG_FILE,
-    ENCODING,
-    TOMLSerializer,
-)
-
-# Get configuration directory
-print(f"Config directory: {CONFIG_DIR}")
-# Output: /home/user/.config/fm-dlp (Linux)
-# Output: /Users/user/Library/Application Support/fm-dlp (macOS)
-# Output: C:\Users\user\AppData\Local\fm-dlp (Windows)
-
-# Check if config file exists
-if CONFIG_FILE.exists():
-    print("Config file found!")
-    content = CONFIG_FILE.read_text(encoding=ENCODING)
-    print(content)
-
-# Create custom TOML data
-data = {
-    "path": "/custom/path",
-    "parameters": {
-        "codec": "opus",
-        "kbps": 192,
-        "quality": "720p",
-        "quiet": True,
-        "metadata": True,
-        "keep": False,
-        "only_video": False,
-        "cookies": "firefox",
-        "remote": "ejs:github",
-    },
-}
-
-# Serialize and save manually
-toml_content = TOMLSerializer.dumps(data)
-CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-CONFIG_FILE.write_text(toml_content, encoding=ENCODING)
 ```
 
 **Automatic Profile Management**
@@ -678,20 +540,6 @@ ParametersManager(color=False).set_parameters(
 # Load specific profiles
 print(f"High quality: {ParametersManager(color=True).get_parameters()}")
 print(f"Mobile quality: {ParametersManager(color=False).get_parameters()}")
-```
-
-**Configuration Directory Structure**
-
-```python
-from fm_dlp_core.utils.config import get_config_dir
-
-# Get configuration directory
-config_dir = get_config_dir("my-app")  # Custom application name
-print(f"Config directory: {config_dir}")
-
-# Default directory for fm-dlp
-default_dir = get_config_dir()  # Uses "fm-dlp"
-print(f"Default config directory: {default_dir}")
 ```
 
 </details>
@@ -757,158 +605,6 @@ asyncio.run(
 )
 ```
 
-### Configuration API Reference
-
-| Class / Method                          | Description                                        |
-| --------------------------------------- | -------------------------------------------------- |
-| `get_config_dir(dir_name)`              | Get OS-specific config directory path              |
-| `CONFIG_DIR`                            | Global constant for config directory               |
-| `CONFIG_FILE`                           | Global constant for config file path               |
-| `ENCODING`                              | Global encoding constant (`"utf-8"`)               |
-| `ConfigManager(color)`                  | Create a config manager instance                   |
-| `ConfigManager.load_config()`           | Load config with LRU caching and error handling    |
-| `ConfigManager.update_config(data)`     | Update config file, creating directories if needed |
-| `TOMLSerializer.dumps(data)`            | Serialize dict to TOML string                      |
-| `TOMLSerializer._value_to_str(value)`   | Convert a Python value to TOML string              |
-| `ParametersManager(color)`              | Create a parameters manager instance               |
-| `ParametersManager.set_parameters(...)` | Write download parameters to config                |
-| `ParametersManager.get_parameters()`    | Read download parameters from config               |
-| `PathManager(color)`                    | Create a path manager instance                     |
-| `PathManager.set_path(path)`            | Set and validate the download directory            |
-| `PathManager.get_path()`                | Get the current download directory                 |
-
----
-
-## 🔧 Advanced Topics
-
-<details>
-<summary><b>Custom Search Providers</b></summary>
-
-Create your own search provider by subclassing `BaseProvider`:
-
-```python
-from fm_dlp_core.commands.search.providers import BaseProvider
-
-
-class SoundCloudProvider(BaseProvider):
-    def _extract_results(self, query: str, limit: int, is_track: bool) -> list:
-        # Implement your search logic
-        # Return list of entries (dicts)
-        return results
-
-    def _extract_url(self, entry: dict, is_track: bool) -> str | None:
-        return entry.get("permalink_url")
-
-    def _fmt_entry(self, entry: dict, num: int, is_track: bool) -> str | None:
-        return self.formatter.fmt_result(
-            num=num,
-            title=entry.get("title", "Unknown"),
-            artist=entry.get("user", {}).get("username", "Unknown"),
-            url=self._extract_url(entry, is_track),
-            is_yt_video=False,
-            is_track=is_track,
-        )
-
-    def _get_empty_message(self, query: str, is_track: bool) -> str:
-        return f"No results found for '{query}'\n"
-
-
-# Use your provider
-provider = SoundCloudProvider(color=True, error_prefix="Error: ")
-for result in provider.search(query="lo-fi", limit=5, is_track=True):
-    print(result)
-```
-
-</details>
-
-<details>
-<summary><b>Custom yt-dlp Options</b></summary>
-
-For advanced use cases, you can build custom yt-dlp options:
-
-```python
-from fm_dlp_core.commands.downloader import DownloadParams, OptionsBuilder
-
-params = DownloadParams(
-    url="https://youtube.com/watch?v=...",
-    codec="mp3",
-    kbps=320,
-    quality="best",
-    jobs=4,
-    quiet=False,
-    metadata=True,
-    keep=False,
-    save=False,
-    use_config=False,
-    path="./downloads",
-    only_video=False,
-    cookies="firefox",
-    remote="ejs:github",
-    color=True,
-)
-
-builder = OptionsBuilder(params)
-opts = builder.build()
-
-# Add custom options
-opts["extractor_args"] = {"youtube": {"skip": ["hls"]}}
-
-# Use with yt-dlp directly
-from yt_dlp import YoutubeDL
-
-with YoutubeDL(opts) as ydl:
-    ydl.download(["https://youtube.com/watch?v=..."])
-```
-
-</details>
-
-<details>
-<summary><b>Cookie Authentication</b></summary>
-
-For private or age-restricted content:
-
-```python
-import asyncio
-from fm_dlp_core import run_downloader
-
-# Using browser cookies
-asyncio.run(
-    run_downloader(
-        url="https://youtube.com/watch?v=...",
-        codec="mp3",
-        cookies="chrome",  # or "firefox", "edge", "opera"
-        path="./downloads",
-    )
-)
-
-# Using cookies file
-asyncio.run(
-    run_downloader(
-        url="https://youtube.com/watch?v=...",
-        codec="mp3",
-        cookies="./cookies.txt",
-        path="./downloads",
-    )
-)
-```
-
-</details>
-
-<details>
-<summary><b>Quality String Parsing</b></summary>
-
-The `quality` parameter supports the following formats:
-
-| Format    | Description                                               |
-| --------- | --------------------------------------------------------- |
-| `"best"`  | Highest available video quality (`bestvideo`)             |
-| `"worst"` | Lowest available video quality (`worstvideo`)             |
-| `"1080"`  | Best video with height ≤ 1080 (`bestvideo[height<=1080]`) |
-| `"1080p"` | Same as `"1080"` (strips the 'p' suffix)                  |
-| Custom    | Any valid yt-dlp format filter string                     |
-
-</details>
-
 ---
 
 ## 📚 API Reference
@@ -948,204 +644,16 @@ The `quality` parameter supports the following formats:
 
 ### Key Functions
 
-| Function                  | Module                        | Description                 |
-| ------------------------- | ----------------------------- | --------------------------- |
-| `run_downloader`          | `commands.downloader`         | Async download entry point  |
-| `search`                  | `commands.search`             | Convenience search function |
-| `get_config_dir`          | `utils.config.config_manager` | Get OS-specific config dir  |
-| `echo`                    | `utils.output`                | Print with color support    |
-| `success/error/info/hint` | `utils.colors`                | Formatted colored messages  |
+| Function                  | Module                | Description                 |
+| ------------------------- | --------------------- | --------------------------- |
+| `run_downloader`          | `commands.downloader` | Async download entry point  |
+| `search`                  | `commands.search`     | Convenience search function |
+| `echo`                    | `utils`               | Print with color support    |
+| `success/error/info/hint` | `utils.colors`        | Formatted colored messages  |
 
 ---
 
-## 💡 Examples
-
-<details>
-<summary><b>Example 1: Download a Music Playlist</b></summary>
-
-```python
-import asyncio
-from fm_dlp_core import run_downloader
-
-
-async def download_playlist(playlist_url: str):
-    await run_downloader(
-        url=playlist_url,
-        codec="flac",
-        kbps=0,  # Lossless
-        jobs=4,
-        metadata=True,
-        path="./music",
-        color=True,
-    )
-
-
-asyncio.run(download_playlist("https://music.youtube.com/playlist?list=..."))
-```
-
-</details>
-
-<details>
-<summary><b>Example 2: Search and Download Top Tracks</b></summary>
-
-```python
-import asyncio
-from fm_dlp_core import search, run_downloader
-
-
-def get_top_tracks(artist: str, limit: int = 5) -> list[str]:
-    return list(search(artist, limit=limit, yt_video=False, only_url=True))
-
-
-async def download_artist(artist: str):
-    urls = get_top_tracks(artist, limit=3)
-    if urls:
-        await run_downloader(
-            url=" ".join(urls),
-            codec="mp3",
-            kbps=320,
-            metadata=True,
-            path=f"./music/{artist}",
-        )
-
-
-asyncio.run(download_artist("Porter Robinson"))
-```
-
-</details>
-
-<details>
-<summary><b>Example 3: Working with Raw Search Data</b></summary>
-
-```python
-from fm_dlp_core import search
-
-# Get raw data for programmatic use
-for result in search(
-    query="Daft Punk",
-    limit=10,
-    yt_video=False,
-    album=False,
-    raw=True,  # Returns dicts
-):
-    print(f"Title: {result['title']}")
-    print(f"Artist: {result.get('artists', [{}])[0].get('name', 'Unknown')}")
-    print(f"Duration: {result.get('duration')}s")
-    print(f"URL: https://music.youtube.com/watch?v={result.get('videoId')}")
-    print("-" * 40)
-```
-
-</details>
-
-<details>
-<summary><b>Example 4: Error Handling</b></summary>
-
-```python
-import asyncio
-from fm_dlp_core import run_downloader
-
-
-async def safe_download(url: str):
-    try:
-        await run_downloader(
-            url=url,
-            codec="mp3",
-            kbps=192,
-            path="./downloads",
-        )
-    except Exception as e:
-        print(f"Download failed for {url}: {e}")
-
-
-asyncio.run(safe_download("https://youtube.com/watch?v=invalid_id"))
-```
-
-</details>
-
-<details>
-<summary><b>Example 5: Using Configuration Profiles</b></summary>
-
-```python
-from fm_dlp_core.utils.config import ParametersManager
-
-# Save a profile with color=True
-ParametersManager(color=True).set_parameters(
-    codec="flac", kbps=0, quality="best", jobs=4,
-    quiet=False, metadata=True, keep=False, only_video=False,
-    cookies="chrome", remote="ejs:github",
-)
-
-# Save another profile with color=False
-ParametersManager(color=False).set_parameters(
-    codec="mp3", kbps=192, quality="720", jobs=2,
-    quiet=True, metadata=True, keep=False, only_video=False,
-    cookies="firefox", remote="ejs:github",
-)
-
-# Load specific profile
-params = ParametersManager(color=True).get_parameters()   # flac profile
-params_low = ParametersManager(color=False).get_parameters()  # mp3 profile
-
-# Use a specific profile in download
-import asyncio
-from fm_dlp_core import run_downloader
-
-
-async def download_with_profile(profile_color: bool):
-    params = ParametersManager(color=profile_color).get_parameters()
-    await run_downloader(
-        url="https://youtube.com/watch?v=...",
-        codec=params["codec"],
-        kbps=params["kbps"],
-        quality=params["quality"],
-        jobs=params["jobs"],
-        quiet=params["quiet"],
-        metadata=params["metadata"],
-        keep=params["keep"],
-        only_video=params["only_video"],
-        cookies=params["cookies"],
-        remote=params["remote"],
-        use_config=False,  # Manual param passing
-        color=profile_color,
-    )
-
-
-asyncio.run(download_with_profile(True))
-```
-
-</details>
-
-<details>
-<summary><b>Example 6: URLParser Usage</b></summary>
-
-```python
-from fm_dlp_core.commands.downloader import URLParser
-
-# Parse URLs from comma-separated string
-parser = URLParser("url1,url2,url3", quiet=False)
-urls = parser.parse()
-print(urls)  # ['url1', 'url2', 'url3']
-
-# Parse URLs from space-separated string
-parser = URLParser("url1 url2 url3", quiet=False)
-urls = parser.parse()
-
-# Parse URLs from file (one per line, comma/space separated supported)
-parser = URLParser("urls.txt", quiet=False)
-urls = parser.parse()
-
-# File content example:
-# https://youtube.com/watch?v=abc123
-# https://youtube.com/watch?v=def456, https://youtube.com/watch?v=ghi789
-# # This is a comment (ignored)
-# https://youtube.com/watch?v=jkl012
-```
-
-</details>
-
----
-
-## 🖥️ Output Formatting
+## 🛠️ Output Formatting
 
 ### Search Results Format
 
@@ -1160,34 +668,21 @@ urls = parser.parse()
 
 ### Format Elements
 
-| Element              | Description                         |
-| -------------------- | ----------------------------------- |
-| **N.**               | Sequential result number            |
-| **Title**            | Track, album, or video title        |
-| **Artist**           | Artist or channel name              |
-| `├─└─│`              | Tree structure for visual hierarchy |
-| **Views │ Duration** | View count and length               |
-| **URL**              | Direct link to content              |
-
-### Colored Output Functions
-
-```python
-from fm_dlp_core.utils.colors import success, error, info, hint, styled, BOLD_YELLOW
-
-print(success("Download completed!"))
-print(error("Failed to process video"))
-print(info("Extracting metadata..."))
-print(hint("Try using a higher bitrate for better quality"))
-print(styled("Custom styled message", BOLD_YELLOW))
-```
+| Element            | Description                               |
+| ------------------ | ----------------------------------------- |
+| `N.`               | Sequential number of search result        |
+| `Title`            | Track, album, or video title              |
+| `Artist`           | Artist or channel name                    |
+| `├─└─│`            | Tree branch characters                    |
+| `Views │ Duration` | View count and length (MM:SS or HH:MM:SS) |
+| `URL`              | Direct link to content                    |
+| `───`              | Visual separator line                     |
 
 ---
 
-## 📄 License
+## 📄 License & Acknowledgments
 
-This project is licensed under the **AGPLv3 License** — see the [LICENSE](LICENSE) file for details.
-
-### Acknowledgments
+AGPLv3 License — Built with:
 
 | Library                                             | Purpose                                |
 | --------------------------------------------------- | -------------------------------------- |
@@ -1195,7 +690,6 @@ This project is licensed under the **AGPLv3 License** — see the [LICENSE](LICE
 | [ytmusicapi](https://github.com/sigma67/ytmusicapi) | YouTube Music search API               |
 | [mutagen](https://github.com/quodlibet/mutagen)     | Metadata tagging for audio files       |
 
----
+**Author:** [Fkernel653](https://github.com/Fkernel653)
 
-**Author:** [Fkernel653](https://github.com/Fkernel653)  
 **Project:** [GitHub](https://github.com/Fkernel653/fm-dlp-core) • [PyPI](https://pypi.org/project/fm-dlp-core)

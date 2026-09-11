@@ -10,7 +10,7 @@ from ...utils import (
     set_colors,
     styled,
 )
-from .config_manager import CONFIG_FILE, ConfigManager
+from .config_manager import ConfigManager
 
 
 class PathManager:
@@ -22,7 +22,7 @@ class PathManager:
     the user's home directory is used as a fallback.
 
     Attributes:
-        PATH_KEY (str): The configuration key under which the path is stored.
+        path_key (str): The configuration key under which the path is stored.
         color (bool): Whether colored output is enabled for messages.
         config_manager (ConfigManager): The underlying configuration manager.
 
@@ -34,12 +34,12 @@ class PathManager:
         '/home/user/Downloads'
     """
 
-    PATH_KEY = "path"
-
     def __init__(self, color: bool = True):
         self.color = color
         self.config_manager = ConfigManager(color)
-        set_colors(self.color)
+        self.config_file = self.config_manager.config_file
+        self.path_key = "path"
+        set_colors(color)
 
     def set_path(self, path: str) -> str:
         """
@@ -56,10 +56,9 @@ class PathManager:
 
             if not Path(input_path).is_dir():
                 echo_error("Please enter the correct path!")
-                raise SystemExit(1)
 
             config = self.config_manager.load_config()
-            config[self.PATH_KEY] = input_path
+            config[self.path_key] = input_path
 
             if not self.config_manager.update_config(config):
                 raise PermissionError()
@@ -67,7 +66,7 @@ class PathManager:
             return styled("Configuration saved successfully", BOLD_GREEN)
 
         except PermissionError:
-            return error(f"Permission denied! Cannot write to {CONFIG_FILE}")
+            return error(f"Permission denied! Cannot write to {self.config_file}")
         except OSError as e:
             return error(f"Error saving configuration: {e}")
 
@@ -82,16 +81,15 @@ class PathManager:
         Returns:
             str: The resolved download directory path.
         """
-        if not CONFIG_FILE.exists():
+        if not self.config_file.exists():
             echo(info("Home directory is used!"))
             echo(hint("Run the 'config' command to configure the download path\n"))
             return str(Path.home())
 
         data = self.config_manager.load_config()
-        download_path = str(data.get(self.PATH_KEY))
+        download_path = str(data.get(self.path_key))
 
         if not download_path or not Path(download_path).is_dir():
             echo_error("Download path does not exist.")
-            raise SystemExit(1)
 
         return download_path

@@ -1,42 +1,7 @@
-import os
 import sys
-import tomllib
-from functools import lru_cache
 from pathlib import Path
-from typing import Any
 
 from ...utils import echo, error, set_colors
-
-ENCODING = "utf-8"
-
-
-def get_config_dir(dir_name: str = "fm-dlp") -> str:
-    """
-    Get the user configuration directory path based on the operating system.
-
-    Args:
-        dir_name (str, optional): Name of the application directory to create
-                                  under the config root. Defaults to "fm-dlp".
-
-    Returns:
-        str: The absolute path to the configuration directory.
-    """
-    home = Path.home()
-
-    if sys.platform == "win32":
-        appdata = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
-        d = Path(appdata) if appdata else (home / "AppData" / "Local")
-    elif sys.platform == "darwin":
-        d = home / "Library" / "Application Support"
-    else:
-        xdg = os.environ.get("XDG_CONFIG_HOME")
-        d = Path(xdg) if xdg else (home / ".config")
-
-    return str(d / dir_name)
-
-
-CONFIG_DIR = get_config_dir()
-CONFIG_FILE = Path(CONFIG_DIR) / "config.toml"
 
 
 class ConfigManager:
@@ -45,8 +10,6 @@ class ConfigManager:
 
     This class is responsible for loading and updating the configuration
     file located in the platform-specific user configuration directory.
-    Loading is cached with ``lru_cache`` for performance, and the cache is
-    automatically invalidated whenever the configuration is updated.
 
     Attributes:
         color (bool): Whether colored output is enabled for messages.
@@ -61,13 +24,40 @@ class ConfigManager:
 
     def __init__(self, color: bool = True):
         self.color = color
-        set_colors(self.color)
+        self.encoding = "utf-8"
+        self.config_dir = self.get_config_dir()
+        self.config_file = Path(self.config_dir) / "config.toml"
+        set_colors(color)
 
-    @staticmethod
-    @lru_cache(maxsize=1)
-    def load_config() -> dict[str, Any]:
+    def get_config_dir(self, dir_name: str = "fm-dlp") -> str:
         """
-        Load configuration from the TOML file with caching for performance.
+        Get the user configuration directory path based on the operating system.
+
+        Args:
+            dir_name (str, optional): Name of the application directory to create
+                                      under the config root. Defaults to "fm-dlp".
+
+        Returns:
+            str: The absolute path to the configuration directory.
+        """
+        import os
+
+        home = Path.home()
+
+        if sys.platform == "win32":
+            appdata = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+            d = Path(appdata) if appdata else (home / "AppData" / "Local")
+        elif sys.platform == "darwin":
+            d = home / "Library" / "Application Support"
+        else:
+            xdg = os.environ.get("XDG_CONFIG_HOME")
+            d = Path(xdg) if xdg else (home / ".config")
+
+        return str(d / dir_name)
+
+    def load_config(self) -> dict[str, str | int | bool]:
+        """
+        Load configuration from the TOML file.
 
         Args:
             color (bool): Enable colored output for error messages when the config
@@ -77,10 +67,12 @@ class ConfigManager:
             dict: Parsed configuration dictionary, or empty dict if the file doesn't
                   exist or is corrupted.
         """
-        if not CONFIG_FILE.exists():
+        import tomllib
+
+        if not self.config_file.exists():
             return {}
         try:
-            content = CONFIG_FILE.read_text(ENCODING)
+            content = self.config_file.read_text(self.encoding)
             return tomllib.loads(content)
         except (tomllib.TOMLDecodeError, OSError):
             echo(
@@ -88,7 +80,7 @@ class ConfigManager:
             )
             return {}
 
-    def update_config(self, data: dict[str, Any]) -> bool:
+    def update_config(self, data: dict[str, str | int | bool]) -> bool:
         """
         Update configuration data to the TOML file, creating directories if needed.
 
@@ -99,10 +91,9 @@ class ConfigManager:
             bool: True if the configuration was updated successfully, False if an error occurred.
         """
         try:
-            CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+            self.config_file.parent.mkdir(parents=True, exist_ok=True)
             toml_content = TOMLSerializer.dumps(data)
-            _ = CONFIG_FILE.write_text(toml_content, ENCODING)
-            self.load_config.cache_clear()
+            self.config_file.write_text(toml_content, self.encoding)
             return True
         except (PermissionError, OSError):
             return False
@@ -112,8 +103,7 @@ class TOMLSerializer:
     """
     Serializes Python dictionaries to TOML format.
 
-    This class provides methods to convert Python data structures (dict, list,
-    str, bool, etc.) into TOML string representation.
+    This class provides methods to convert Python data structures (str and dict) into TOML string representation.
 
     Example:
         >>> serializer = TOMLSerializer()
@@ -126,7 +116,7 @@ class TOMLSerializer:
     """
 
     @classmethod
-    def dumps(cls, data: dict[str, Any]) -> str:
+    def dumps(cls, data: dict[str, str | int | bool]) -> str:
         """
         Serialize a dictionary to a TOML string.
 
@@ -148,7 +138,7 @@ class TOMLSerializer:
         return "\n".join(lines)
 
     @classmethod
-    def _value_to_str(cls, value: Any) -> str:
+    def _value_to_str(cls, value: str | dict | int | bool) -> str:
         """
         Convert a Python value to its TOML string representation.
 
@@ -162,14 +152,10 @@ class TOMLSerializer:
             return f'"{value}"'
         elif isinstance(value, bool):
             return "true" if value else "false"
-        elif isinstance(value, list):
-            items = [cls._value_to_str(item) for item in value]
-            return f"[{', '.join(items)}]"
         elif isinstance(value, dict):
             items: list[str] = []
             for k, v in value.items():
                 key_str = f'"{k}"' if not isinstance(k, str) else k
                 items.append(f"{key_str} = {cls._value_to_str(v)}")
             return f"{{ {', '.join(items)} }}"
-        else:
-            return str(value)
+        return str(value)

@@ -1,44 +1,14 @@
-"""
-Terminal color utilities for styled console output.
-
-This module provides ANSI color codes and helper functions for colorizing
-terminal output. Colors can be globally enabled or disabled via the
-`set_colors()` function, allowing consistent behavior across the application
-whether running in a color-capable terminal or not.
-
-Constants:
-    RESET: Reset all text formatting to default.
-    BOLD_WHITE, GRAY, WHITE: White/gray color variations.
-    BOLD_RED, BOLD_GREEN, BOLD_YELLOW, BOLD_CYAN: Bold primary colors.
-
-Functions:
-    set_colors: Enable or disable color output globally.
-    styled: Apply ANSI color codes to text conditionally.
-    success: Format text as a success message (bold green).
-    error: Format text as an error message (bold red).
-    info: Format text as an info message (bold cyan).
-    hint: Format text as a subtle hint message (gray).
-
-Example:
-    >>> from fm_dlp_core.utils.colors import success, error, set_colors
-    >>> set_colors(True)
-    >>> print(success("Download complete!"))
-    >>> print(error("Failed to download"))
-"""
-
 RESET = "\033[0m"
 
 BOLD_WHITE = "\033[37m"
 GRAY = "\033[90m"
-
-WHITE = "\033[0;37m"
 
 BOLD_RED = "\033[1;31m"
 BOLD_GREEN = "\033[1;32m"
 BOLD_YELLOW = "\033[1;33m"
 BOLD_CYAN = "\033[1;36m"
 
-colors_enabled: bool = True
+colors_enabled = True
 
 
 def set_colors(enabled: bool):
@@ -66,8 +36,7 @@ def styled(text: str, color: str) -> str:
     """
     if colors_enabled:
         return color + text + RESET
-    else:
-        return text
+    return text
 
 
 def success(text: str, prefix: str = "Success: ") -> str:
@@ -88,8 +57,7 @@ def success(text: str, prefix: str = "Success: ") -> str:
     """
     if colors_enabled:
         return BOLD_GREEN + prefix + RESET + text
-    else:
-        return prefix + text
+    return prefix + text
 
 
 def error(text: str, prefix: str = "Error: ") -> str:
@@ -109,8 +77,7 @@ def error(text: str, prefix: str = "Error: ") -> str:
     """
     if colors_enabled:
         return BOLD_RED + prefix + RESET + text
-    else:
-        return prefix + text
+    return prefix + text
 
 
 def info(text: str, prefix: str = "Info: ") -> str:
@@ -130,8 +97,7 @@ def info(text: str, prefix: str = "Info: ") -> str:
     """
     if colors_enabled:
         return BOLD_CYAN + prefix + RESET + text
-    else:
-        return prefix + text
+    return prefix + text
 
 
 def hint(text: str, prefix: str = "Hint: ") -> str:
@@ -151,5 +117,4 @@ def hint(text: str, prefix: str = "Hint: ") -> str:
     """
     if colors_enabled:
         return GRAY + prefix + RESET + text
-    else:
-        return prefix + text
+    return prefix + text

@@ -1,7 +1,5 @@
-"""Build yt-dlp options."""
-
 from pathlib import Path
-from typing import Any, final
+from typing import Any
 
 from ...utils import (
     AUDIO_CODECS,
@@ -11,7 +9,6 @@ from ...utils import (
 from .params import DownloadParams
 
 
-@final
 class OptionsBuilder:
     """Build yt-dlp options dictionary."""
 

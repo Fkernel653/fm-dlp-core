@@ -1,7 +1,5 @@
-from typing import Any
-
-from ...utils import echo, echo_error, set_colors, success, validate_remote
-from .config_manager import CONFIG_FILE, ConfigManager
+from ...utils import echo, echo_error, set_colors, success
+from .config_manager import ConfigManager
 
 
 class ParametersManager:
@@ -14,7 +12,7 @@ class ParametersManager:
     optional cookies and remote URL values.
 
     Attributes:
-        PARAM_KEY (str): The configuration key under which parameters are stored.
+        param_key (str): The configuration key under which parameters are stored.
         color (bool): Whether colored output is enabled for messages.
         config_manager (ConfigManager): The underlying configuration manager.
 
@@ -35,12 +33,12 @@ class ParametersManager:
         'mp3'
     """
 
-    PARAM_KEY = "parameters"
-
     def __init__(self, color: bool = True):
         self.color = color
         self.config_manager = ConfigManager(color)
-        set_colors(self.color)
+        self.config_file = self.config_manager.config_file
+        self.param_key = "parameters"
+        set_colors(color)
 
     def set_parameters(
         self,
@@ -91,10 +89,9 @@ class ParametersManager:
                 params["cookies"] = cookies
 
             if remote:
-                _ = validate_remote(remote)
                 params["remote"] = remote
 
-            config[self.PARAM_KEY] = params
+            config[self.param_key] = params
 
             if not self.config_manager.update_config(config):
                 raise PermissionError()
@@ -107,7 +104,7 @@ class ParametersManager:
         except PermissionError:
             self._if_quiet(
                 quiet,
-                f"Permission denied! Cannot write to {CONFIG_FILE}",
+                f"Permission denied! Cannot write to {self.config_file}",
                 error_result=True,
             )
             return False
@@ -115,20 +112,20 @@ class ParametersManager:
             self._if_quiet(quiet, f"Error saving configuration: {e}", error_result=True)
             return False
 
-    def get_parameters(self) -> dict[str, Any]:
+    def get_parameters(self) -> dict[str, str | int | bool]:
         """
         Retrieve download parameters from the configuration file.
 
         Returns:
-            dict[str, Any]: A dictionary of stored parameters, or an empty
+            dict[str, str | int | bool]: A dictionary of stored parameters, or an empty
             dictionary if the configuration file does not exist or contains
             no parameters section.
         """
-        if not CONFIG_FILE.exists():
+        if not self.config_file.exists():
             return {}
 
         config = self.config_manager.load_config()
-        return config.get(self.PARAM_KEY, {})
+        return config.get(self.param_key, {})
 
     def _if_quiet(
         self,
@@ -151,5 +148,3 @@ class ParametersManager:
                 echo_error(text)
             elif success_result:
                 echo(success(text))
-            else:
-                echo(text)

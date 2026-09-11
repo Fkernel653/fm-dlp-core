@@ -1,22 +1,15 @@
-"""Configuration handling for downloader."""
-
-from typing import Any, final
-
-from ...utils import validate_remote
 from ...utils.config.parametrs import ParametersManager
 from .params import DownloadParams
 
 
-@final
 class DownloadConfig:
     """Configuration container for download settings."""
 
     def __init__(self, params: DownloadParams):
-        _ = validate_remote(params.remote)
         self.params = params
         self.params_manager = ParametersManager(params.color)
 
-    def apply_config(self) -> dict[str, Any]:
+    def apply_config(self) -> dict[str, str | int | bool | None]:
         """
         Apply saved configuration settings if requested and return parameters dict.
 
@@ -26,7 +19,7 @@ class DownloadConfig:
         saved configuration exists, the current instance values are returned unchanged.
 
         Returns:
-            dict[str, Any]: A dictionary containing the final parameters to be used
+            dict[str, str | int | bool | None]: A dictionary containing the final parameters to be used
                 for downloading. Keys include: codec, kbps, quality, jobs, quiet,
                 metadata, keep, only_video, cookies and remote.
         """

@@ -1,15 +1,9 @@
-"""Main downloader class."""
-
 import asyncio
-from collections.abc import AsyncIterator
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from types import TracebackType
 
 from ...utils import (
     BOLD_YELLOW,
     VIDEO_CONTAINERS,
     echo,
-    get_ytdlp,
     info,
     set_colors,
     styled,
@@ -31,16 +25,16 @@ class Download:
 
         conf = self.config.apply_config()
 
-        self.codec: str = conf["codec"]
-        self.kbps: int = conf["kbps"]
-        self.quality: str = conf["quality"]
-        self.jobs: int = conf["jobs"]
-        self.quiet: bool = conf["quiet"]
-        self.metadata: bool = conf["metadata"]
-        self.keep: bool = conf["keep"]
-        self.only_video: bool = conf["only_video"]
-        self.cookies: str = conf["cookies"]
-        self.remote: str = conf["remote"]
+        self.codec = conf["codec"]
+        self.kbps = conf["kbps"]
+        self.quality = conf["quality"]
+        self.jobs = conf["jobs"]
+        self.quiet = conf["quiet"]
+        self.metadata = conf["metadata"]
+        self.keep = conf["keep"]
+        self.only_video = conf["only_video"]
+        self.cookies = conf["cookies"]
+        self.remote = conf["remote"]
 
         if not self.config.save_config():
             return
@@ -49,6 +43,8 @@ class Download:
         self._url_list = URLParser(params.url, params.quiet).parse()
 
         set_colors(params.color)
+
+        self._YoutubeDL = None
 
     def _get_executor(self):
         """
@@ -63,6 +59,8 @@ class Download:
             ProcessPoolExecutor | ThreadPoolExecutor: An executor instance suitable
                 for the current download task type.
         """
+        from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+
         if self.only_video or self.codec in VIDEO_CONTAINERS:
             return ProcessPoolExecutor(max_workers=self.jobs)
         else:
@@ -72,12 +70,7 @@ class Download:
         """Enter the async context manager and return the downloader instance."""
         return self
 
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Cleanup thread pool executor on context exit."""
         self._executor.shutdown(wait=True, cancel_futures=False)
         return False
@@ -86,7 +79,7 @@ class Download:
         """Return async iterator for download results."""
         return self._aiter()
 
-    async def _aiter(self) -> AsyncIterator[str | None]:
+    async def _aiter(self):
         """Async iterator yielding download results with concurrency control."""
         sem = asyncio.Semaphore(self.jobs)
 
@@ -135,11 +128,31 @@ class Download:
 
         return f"\n{success(url)}\n" if not self.quiet else None
 
+    def get_ytdlp(self):
+        """
+        Lazily import and return the yt-dlp YoutubeDL class.
+
+        This function ensures that the yt-dlp library is only imported when
+        first needed, which reduces startup time and avoids dependency issues
+        for code paths that don't require video downloading.
+
+        The imported class is cached globally after the first call, so subsequent
+        calls return immediately without re-importing.
+
+        Returns:
+            type: The yt-dlp YoutubeDL class object.
+        """
+        if self._YoutubeDL is None:
+            from yt_dlp import YoutubeDL
+
+            self._YoutubeDL = YoutubeDL
+        return self._YoutubeDL
+
     def _sync_download(self, url: str) -> None:
         """Synchronous download using yt-dlp (runs in thread pool)."""
         options = OptionsBuilder(self.params).build()
 
-        YoutubeDL = get_ytdlp()
+        YoutubeDL = self.get_ytdlp()
         with YoutubeDL(options) as ydl:
             _ = ydl.download([url])
 

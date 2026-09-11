@@ -1,12 +1,8 @@
-"""URL parsing utilities."""
-
 from pathlib import Path
-from typing import final
 
 from ...utils import echo, echo_error, info
 
 
-@final
 class URLParser:
     """Parse URLs from string or file."""
 
