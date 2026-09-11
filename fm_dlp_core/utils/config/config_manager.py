@@ -1,7 +1,6 @@
-import sys
 from pathlib import Path
 
-from ...utils import echo, error, set_colors
+from ...utils import echo, error, set_colors, sys
 
 
 class ConfigManager:
@@ -138,7 +137,7 @@ class TOMLSerializer:
         return "\n".join(lines)
 
     @classmethod
-    def _value_to_str(cls, value: str | dict | int | bool) -> str:
+    def _value_to_str(cls, value: str | int | bool | dict) -> str:
         """
         Convert a Python value to its TOML string representation.
 
