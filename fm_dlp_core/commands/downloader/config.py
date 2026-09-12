@@ -24,18 +24,18 @@ class DownloadConfig:
                 metadata, keep, only_video, cookies and remote.
         """
         if self.params.use_config:
-            saved = self.params_manager.get_parameters()
+            conf = self.params_manager.get_parameters()
             return {
-                "codec": saved.get("codec", self.params.codec),
-                "kbps": saved.get("kbps", self.params.kbps),
-                "quality": saved.get("quality", self.params.quality),
-                "jobs": saved.get("jobs", self.params.jobs),
-                "quiet": saved.get("quiet", self.params.quiet),
-                "metadata": saved.get("metadata", self.params.metadata),
-                "keep": saved.get("keep", self.params.keep),
-                "only_video": saved.get("only_video", self.params.only_video),
-                "cookies": saved.get("cookies", self.params.cookies),
-                "remote": saved.get("remote", self.params.remote),
+                "codec": conf.get("codec", self.params.codec),
+                "kbps": conf.get("kbps", self.params.kbps),
+                "quality": conf.get("quality", self.params.quality),
+                "jobs": conf.get("jobs", self.params.jobs),
+                "quiet": conf.get("quiet", self.params.quiet),
+                "metadata": conf.get("metadata", self.params.metadata),
+                "keep": conf.get("keep", self.params.keep),
+                "only_video": conf.get("only_video", self.params.only_video),
+                "cookies": conf.get("cookies", self.params.cookies),
+                "remote": conf.get("remote", self.params.remote),
             }
         return {
             "codec": self.params.codec,
