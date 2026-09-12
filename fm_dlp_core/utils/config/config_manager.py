@@ -1,7 +1,37 @@
-import sys
 from pathlib import Path
 
-from ...utils import echo, error, set_colors
+from ...utils import echo_error, set_colors
+
+
+def get_config_dir(dir_name: str = "fm-dlp") -> str:
+    """
+    Get the user configuration directory path based on the operating system.
+
+    Args:
+        dir_name (str, optional): Name of the application directory to create
+                                  under the config root. Defaults to "fm-dlp".
+
+    Returns:
+        str: The absolute path to the configuration directory.
+    """
+    import os
+    import sys
+
+    home = Path.home()
+
+    if sys.platform == "win32":
+        appdata = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+        d = Path(appdata) if appdata else (home / "AppData" / "Local")
+    elif sys.platform == "darwin":
+        d = home / "Library" / "Application Support"
+    else:
+        xdg = os.environ.get("XDG_CONFIG_HOME")
+        d = Path(xdg) if xdg else (home / ".config")
+
+    return str(d / dir_name)
+
+
+CONFIG_FILE = Path(get_config_dir()) / "config.toml"
 
 
 class ConfigManager:
@@ -25,37 +55,9 @@ class ConfigManager:
     def __init__(self, color: bool = True):
         self.color = color
         self.encoding = "utf-8"
-        self.config_dir = self.get_config_dir()
-        self.config_file = Path(self.config_dir) / "config.toml"
         set_colors(color)
 
-    def get_config_dir(self, dir_name: str = "fm-dlp") -> str:
-        """
-        Get the user configuration directory path based on the operating system.
-
-        Args:
-            dir_name (str, optional): Name of the application directory to create
-                                      under the config root. Defaults to "fm-dlp".
-
-        Returns:
-            str: The absolute path to the configuration directory.
-        """
-        import os
-
-        home = Path.home()
-
-        if sys.platform == "win32":
-            appdata = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
-            d = Path(appdata) if appdata else (home / "AppData" / "Local")
-        elif sys.platform == "darwin":
-            d = home / "Library" / "Application Support"
-        else:
-            xdg = os.environ.get("XDG_CONFIG_HOME")
-            d = Path(xdg) if xdg else (home / ".config")
-
-        return str(d / dir_name)
-
-    def load_config(self) -> dict[str, str | int | bool]:
+    def load_config(self) -> dict[str, str | int | bool | None]:
         """
         Load configuration from the TOML file.
 
@@ -69,18 +71,16 @@ class ConfigManager:
         """
         import tomllib
 
-        if not self.config_file.exists():
+        if not CONFIG_FILE.exists():
             return {}
         try:
-            content = self.config_file.read_text(self.encoding)
+            content = CONFIG_FILE.read_text(self.encoding)
             return tomllib.loads(content)
         except (tomllib.TOMLDecodeError, OSError):
-            echo(
-                error("Config file is corrupted. Creating new one..."), file=sys.stderr
-            )
+            echo_error("Config file is corrupted. Creating new one...", exit=False)
             return {}
 
-    def update_config(self, data: dict[str, str | int | bool]) -> bool:
+    def update_config(self, data: dict[str, str | int | bool | None]) -> bool:
         """
         Update configuration data to the TOML file, creating directories if needed.
 
@@ -91,9 +91,9 @@ class ConfigManager:
             bool: True if the configuration was updated successfully, False if an error occurred.
         """
         try:
-            self.config_file.parent.mkdir(parents=True, exist_ok=True)
+            CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
             toml_content = TOMLSerializer.dumps(data)
-            self.config_file.write_text(toml_content, self.encoding)
+            CONFIG_FILE.write_text(toml_content, self.encoding)
             return True
         except (PermissionError, OSError):
             return False
@@ -116,7 +116,7 @@ class TOMLSerializer:
     """
 
     @classmethod
-    def dumps(cls, data: dict[str, str | int | bool]) -> str:
+    def dumps(cls, data: dict[str, str | int | bool | None]) -> str:
         """
         Serialize a dictionary to a TOML string.
 
@@ -126,19 +126,19 @@ class TOMLSerializer:
         Returns:
             TOML string representation of the dictionary.
         """
-        lines: list[str] = []
-        for key, value in data.items():
-            if isinstance(value, dict):
-                lines.append(f"[{key}]")
-                for sub_key, sub_value in value.items():
+        lines = []
+        for k, v in data.items():
+            if isinstance(v, dict):
+                lines.append(f"[{k}]")
+                for sub_key, sub_value in v.items():
                     lines.append(f"{sub_key} = {cls._value_to_str(sub_value)}")
             else:
-                lines.append(f"{key} = {cls._value_to_str(value)}")
+                lines.append(f"{k} = {cls._value_to_str(v)}")
             lines.append("")
         return "\n".join(lines)
 
     @classmethod
-    def _value_to_str(cls, value: str | int | bool | dict) -> str:
+    def _value_to_str(cls, value: str | int | bool | dict | None) -> str:
         """
         Convert a Python value to its TOML string representation.
 
@@ -153,7 +153,7 @@ class TOMLSerializer:
         elif isinstance(value, bool):
             return "true" if value else "false"
         elif isinstance(value, dict):
-            items: list[str] = []
+            items = []
             for k, v in value.items():
                 key_str = f'"{k}"' if not isinstance(k, str) else k
                 items.append(f"{key_str} = {cls._value_to_str(v)}")

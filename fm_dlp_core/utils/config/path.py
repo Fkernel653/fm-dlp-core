@@ -5,12 +5,11 @@ from ...utils import (
     echo,
     echo_error,
     error,
-    hint,
     info,
     set_colors,
     styled,
 )
-from .config_manager import ConfigManager
+from .config_manager import CONFIG_FILE, ConfigManager
 
 
 class PathManager:
@@ -37,7 +36,6 @@ class PathManager:
     def __init__(self, color: bool = True):
         self.color = color
         self.config_manager = ConfigManager(color)
-        self.config_file = self.config_manager.config_file
         self.path_key = "path"
         set_colors(color)
 
@@ -66,7 +64,7 @@ class PathManager:
             return styled("Configuration saved successfully", BOLD_GREEN)
 
         except PermissionError:
-            return error(f"Permission denied! Cannot write to {self.config_file}")
+            return error(f"Permission denied! Cannot write to {CONFIG_FILE}")
         except OSError as e:
             return error(f"Error saving configuration: {e}")
 
@@ -81,9 +79,9 @@ class PathManager:
         Returns:
             str: The resolved download directory path.
         """
-        if not self.config_file.exists():
+        if not CONFIG_FILE.exists():
+            echo_error("Configuration file not found", exit=False)
             echo(info("Home directory is used!"))
-            echo(hint("Run the 'config' command to configure the download path\n"))
             return str(Path.home())
 
         data = self.config_manager.load_config()

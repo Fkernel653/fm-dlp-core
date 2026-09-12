@@ -15,6 +15,9 @@ Submodules:
     parametrs: Parameter management for download configurations.
     path: Path management for download directories.
 
+Constants:
+    CONFIG_FILE: The path to the configuration file.
+
 Classes:
     ConfigManager: Loads and updates the TOML configuration file with caching.
     ParametersManager: Reads and writes download parameters in the config.
@@ -33,14 +36,12 @@ Example:
     '/downloads'
 """
 
-from .config_manager import (
-    ConfigManager,
-    TOMLSerializer,
-)
+from .config_manager import CONFIG_FILE, ConfigManager, TOMLSerializer
 from .parametrs import ParametersManager
 from .path import PathManager
 
 __all__ = [
+    "CONFIG_FILE",
     "ConfigManager",
     "ParametersManager",
     "PathManager",
