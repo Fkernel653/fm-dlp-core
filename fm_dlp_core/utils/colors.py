@@ -98,23 +98,3 @@ def info(text: str, prefix: str = "Info: ") -> str:
     if colors_enabled:
         return BOLD_CYAN + prefix + RESET + text
     return prefix + text
-
-
-def hint(text: str, prefix: str = "Hint: ") -> str:
-    """
-    Format text as a subtle hint message with gray coloring.
-
-    Adds a 'Hint: ' prefix and applies gray ANSI color to the entire message
-    when color output is enabled. Used for supplementary tips, suggestions,
-    or auxiliary information that shouldn't distract from the main output.
-
-    Args:
-        text (str): The hint message content.
-        prefix (str, optional): Custom prefix text. Defaults to "Hint: ".
-
-    Returns:
-        str: Formatted hint message with optional coloring.
-    """
-    if colors_enabled:
-        return GRAY + prefix + RESET + text
-    return prefix + text
