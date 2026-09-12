@@ -434,13 +434,6 @@ params = manager.get_parameters()
 print(params["codec"])  # 'mp3'
 ```
 
-**Key behaviors:**
-
-- `PARAM_KEY = "parameters"` — the TOML section name
-- The `remote` value is validated via `validate_remote()` before being stored
-- `cookies` and `remote` are only written if truthy (omitted from the config otherwise)
-- Success/error messages are suppressed when `quiet=True`
-
 ### PathManager Class
 
 Manages the top-level `path` key — the download directory.
