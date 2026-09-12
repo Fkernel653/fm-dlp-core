@@ -23,7 +23,6 @@ from .colors import (
     GRAY,
     RESET,
     error,
-    hint,
     info,
     set_colors,
     styled,
@@ -64,24 +63,30 @@ def echo(text: str, file: TextIO = sys.stdout) -> None:
     file.write(text + "\n")
 
 
-def echo_error(text: str) -> None:
-    """
-    Print an error message to stderr and terminate the program.
+def echo_error(text: str, exit: bool = True) -> None:
+    """Print an error message to stderr and terminate execution.
 
     The error message is formatted with the standard error style
-    (typically red) and written to stderr. The function then calls
-    sys.exit(1) to halt execution with a non-zero exit code.
+    (typically red) and written to stderr. If `exit` is True,
+    sys.exit(1) is called to halt the program with a non-zero
+    exit code.
 
     Args:
         text: The error message to display.
+        exit: Whether to terminate the program. If True, sys.exit(1)
+            is called; (default: True)
 
     Example:
-        >>> echo_error("File not found")
+        >>> echo_error("File not found", exit=True)
         [ERROR] File not found  # formatted in red
         # Program exits with code 1
+
+        >>> echo_error("File not found", exit=False)
+        [ERROR] File not found  # formatted in red
     """
     echo(error(text), file=sys.stderr)
-    sys.exit(1)
+    if exit:
+        sys.exit(1)
 
 
 __all__ = [
@@ -99,7 +104,6 @@ __all__ = [
     "echo",
     "echo_error",
     "error",
-    "hint",
     "info",
     "set_colors",
     "styled",
