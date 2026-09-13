@@ -1,3 +1,5 @@
+from typing import Any
+
 from ...utils import echo, echo_error, set_colors, success
 from .config_manager import CONFIG_FILE, ConfigManager
 
@@ -73,7 +75,7 @@ class ParametersManager:
         try:
             config = self.config_manager.load_config()
 
-            params: dict[str, str | int | bool | None] = {
+            params: dict[str, Any] = {
                 "codec": codec,
                 "kbps": kbps,
                 "quality": quality,
@@ -111,12 +113,12 @@ class ParametersManager:
             self._if_quiet(quiet, f"Error saving configuration: {e}", error_result=True)
             return False
 
-    def get_parameters(self) -> dict[str, str | int | bool | None]:
+    def get_parameters(self) -> dict[str, Any]:
         """
         Retrieve download parameters from the configuration file.
 
         Returns:
-            dict[str, str | int | bool | None]: A dictionary of stored parameters, or an empty
+            dict[str, Any]: A dictionary of stored parameters, or an empty
             dictionary if the configuration file does not exist or contains
             no parameters section.
         """

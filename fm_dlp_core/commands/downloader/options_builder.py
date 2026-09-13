@@ -59,7 +59,7 @@ class OptionsBuilder:
             dict[str, Any]: A complete yt-dlp options dictionary ready to be passed
                 to the YoutubeDL constructor.
         """
-        base_opts: dict[str, Any] = {
+        base_opts = {
             "quiet": self.params.quiet,
             "no_warnings": self.params.quiet,
             "outtmpl": str(Path(self.params.path) / "%(title)s.%(ext)s"),

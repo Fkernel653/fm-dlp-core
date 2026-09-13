@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from ...utils import echo_error, set_colors
 
@@ -57,7 +58,7 @@ class ConfigManager:
         self.encoding = "utf-8"
         set_colors(color)
 
-    def load_config(self) -> dict[str, str | int | bool | None]:
+    def load_config(self) -> dict[str, Any]:
         """
         Load configuration from the TOML file.
 
@@ -80,7 +81,7 @@ class ConfigManager:
             echo_error("Config file is corrupted. Creating new one...", exit=False)
             return {}
 
-    def update_config(self, data: dict[str, str | int | bool | None]) -> bool:
+    def update_config(self, data: dict[str, Any]) -> bool:
         """
         Update configuration data to the TOML file, creating directories if needed.
 
@@ -116,7 +117,7 @@ class TOMLSerializer:
     """
 
     @classmethod
-    def dumps(cls, data: dict[str, str | int | bool | None]) -> str:
+    def dumps(cls, data: dict[str, Any]) -> str:
         """
         Serialize a dictionary to a TOML string.
 
@@ -138,7 +139,7 @@ class TOMLSerializer:
         return "\n".join(lines)
 
     @classmethod
-    def _value_to_str(cls, value: str | int | bool | dict | None) -> str:
+    def _value_to_str(cls, value: Any) -> str:
         """
         Convert a Python value to its TOML string representation.
 

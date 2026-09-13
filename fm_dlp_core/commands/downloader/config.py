@@ -1,3 +1,5 @@
+from typing import Any
+
 from ...utils.config.parametrs import ParametersManager
 from .params import DownloadParams
 
@@ -9,7 +11,7 @@ class DownloadConfig:
         self.params = params
         self.params_manager = ParametersManager(params.color)
 
-    def apply_config(self) -> dict[str, str | int | bool | None]:
+    def apply_config(self) -> dict[str, Any]:
         """
         Apply saved configuration settings if requested and return parameters dict.
 
@@ -19,7 +21,7 @@ class DownloadConfig:
         saved configuration exists, the current instance values are returned unchanged.
 
         Returns:
-            dict[str, str | int | bool | None]: A dictionary containing the final parameters to be used
+            dict[str, Any]: A dictionary containing the final parameters to be used
                 for downloading. Keys include: codec, kbps, quality, jobs, quiet,
                 metadata, keep, only_video, cookies and remote.
         """
