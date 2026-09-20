@@ -23,7 +23,8 @@ class DownloadConfig:
         Returns:
             dict[str, Any]: A dictionary containing the final parameters to be used
                 for downloading. Keys include: codec, kbps, quality, jobs, quiet,
-                metadata, keep, only_video, cookies and remote.
+                metadata, keep, only_video, cookies, remote, subtitles,
+                subtitle_langs, embed_subs, auto_subs, ytdlp_args.
         """
         if self.params.use_config:
             conf = self.params_manager.get_parameters()
@@ -38,6 +39,13 @@ class DownloadConfig:
                 "only_video": conf.get("only_video", self.params.only_video),
                 "cookies": conf.get("cookies", self.params.cookies),
                 "remote": conf.get("remote", self.params.remote),
+                "subtitles": conf.get("subtitles", self.params.subtitles),
+                "subtitle_langs": conf.get(
+                    "subtitle_langs", self.params.subtitle_langs
+                ),
+                "embed_subs": conf.get("embed_subs", self.params.embed_subs),
+                "auto_subs": conf.get("auto_subs", self.params.auto_subs),
+                "ytdlp_args": conf.get("ytdlp_args", self.params.ytdlp_args),
             }
         return {
             "codec": self.params.codec,
@@ -50,6 +58,11 @@ class DownloadConfig:
             "only_video": self.params.only_video,
             "cookies": self.params.cookies,
             "remote": self.params.remote,
+            "subtitles": self.params.subtitles,
+            "subtitle_langs": self.params.subtitle_langs,
+            "embed_subs": self.params.embed_subs,
+            "auto_subs": self.params.auto_subs,
+            "ytdlp_args": self.params.ytdlp_args,
         }
 
     def save_config(self) -> bool:
@@ -57,25 +70,14 @@ class DownloadConfig:
         Save current download settings to the persistent configuration file.
 
         This method persists the current instance parameters (codec, quality, jobs,
-        etc.) to the user's configuration storage so they can be reused in future
-        sessions via the `--use-config` option. The method is only executed if
-        the `save` flag is True.
+        subtitles, etc.) to the user's configuration storage so they can be reused
+        in future sessions via the `--use-config` option. The method is only executed
+        if the `save` flag is True.
 
         Returns:
             bool: True if configuration was saved successfully or if `save` is False
                 (no operation needed), False if an error occurred during saving.
         """
         if self.params.save:
-            return self.params_manager.set_parameters(
-                self.params.codec,
-                self.params.kbps,
-                self.params.quality,
-                self.params.jobs,
-                self.params.quiet,
-                self.params.metadata,
-                self.params.keep,
-                self.params.only_video,
-                self.params.cookies,
-                self.params.remote,
-            )
+            return self.params_manager.set_parameters(self.params)
         return True

@@ -16,10 +16,61 @@ from .url_parser import URLParser
 
 
 class Download:
-    """Async YouTube audio/video downloader."""
+    """
+    Async YouTube audio/video downloader built on top of yt-dlp.
+
+    This class encapsulates the full download lifecycle: URL parsing,
+    configuration resolution (including user-defined config), executor
+    selection, concurrent task execution, and lazy loading of heavy
+    dependencies (yt-dlp).
+
+    Key features:
+        - Supports both audio and video formats. For video and container
+          formats, a ProcessPoolExecutor is used (transcoding is CPU-bound),
+          while audio downloads use a ThreadPoolExecutor (tasks are mostly
+          I/O-bound).
+        - Concurrency is throttled by the `jobs` parameter via an
+          asyncio.Semaphore, preventing system overload.
+        - Download results are exposed as an async iterator (`__aiter__`),
+          allowing results to be consumed as they complete.
+        - Can be used as an async context manager: on exit, the executor
+          pool is gracefully shut down.
+        - Supports subtitle download/embedding and arbitrary yt-dlp args.
+
+    Args:
+        params (DownloadParams): Download parameters including URL, codec,
+            quality, number of jobs, metadata/quiet/keep flags, save path,
+            cookies, remote storage, subtitles, and raw yt-dlp args.
+
+    Attributes:
+        params (DownloadParams): The original download parameters.
+        config (DownloadConfig): Configuration derived from the parameters.
+        codec (str): Selected audio/video codec.
+        kbps (int): Audio bitrate in kbps.
+        quality (str): Desired video quality.
+        jobs (int): Maximum number of concurrent downloads.
+        quiet (bool): Suppresses progress output when True.
+        metadata (bool): Whether to embed metadata into the output file.
+        keep (bool): Whether to keep intermediate files.
+        only_video (bool): Download video only (no audio).
+        cookies (str | None): Path to a cookies file, or None.
+        remote (str): Name of the remote storage target (if used).
+        subtitles (bool): Whether subtitles should be downloaded.
+        subtitle_langs (str): Comma-separated subtitle language codes.
+        embed_subs (bool): Whether to embed subtitles into the container.
+        auto_subs (bool): Whether to include auto-generated subtitles.
+        ytdlp_args (dict[str, Any] | None): Extra raw yt-dlp options.
+
+    Example:
+        >>> params = DownloadParams(url="https://youtu.be/...", codec="mp3", ...)
+        >>> async with Download(params) as dl:
+        ...     async for result in dl:
+        ...         print(result)
+        ...     # or
+        ...     await dl.download_all()
+    """
 
     def __init__(self, params: DownloadParams):
-        """Initialize downloader with configuration."""
         self.params = params
         self.config = DownloadConfig(params)
 
@@ -35,6 +86,11 @@ class Download:
         self.only_video = conf["only_video"]
         self.cookies = conf["cookies"]
         self.remote = conf["remote"]
+        self.subtitles = conf["subtitles"]
+        self.subtitle_langs = conf["subtitle_langs"]
+        self.embed_subs = conf["embed_subs"]
+        self.auto_subs = conf["auto_subs"]
+        self.ytdlp_args = conf["ytdlp_args"]
 
         if not self.config.save_config():
             return
@@ -49,15 +105,6 @@ class Download:
     def _get_executor(self):
         """
         Select the appropriate executor type based on the download task.
-
-        Returns a ProcessPoolExecutor for video downloads or container formats
-        (which benefit from CPU parallelism for transcoding), and a ThreadPoolExecutor
-        for audio downloads (which are typically I/O-bound and work better with
-        threading). The number of workers is determined by the `jobs` parameter.
-
-        Returns:
-            ProcessPoolExecutor | ThreadPoolExecutor: An executor instance suitable
-                for the current download task type.
         """
         from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
@@ -102,19 +149,6 @@ class Download:
     async def _download_url(self, url: str) -> str | None:
         """
         Download a single URL asynchronously and return a status message.
-
-        This method handles the complete download process for a single URL,
-        including:
-        - Disabling metadata embedding for WAV format (not supported)
-        - Logging progress information if not in quiet mode
-        - Offloading the synchronous yt-dlp download to a thread/process pool
-
-        Args:
-            url (str): The YouTube URL to download.
-
-        Returns:
-            str | None: A formatted success message if not in quiet mode,
-                otherwise None. Returns None if the download fails or is quiet.
         """
         if self.codec == "wav" and self.metadata:
             self.metadata = False
@@ -131,16 +165,6 @@ class Download:
     def get_ytdlp(self):
         """
         Lazily import and return the yt-dlp YoutubeDL class.
-
-        This function ensures that the yt-dlp library is only imported when
-        first needed, which reduces startup time and avoids dependency issues
-        for code paths that don't require video downloading.
-
-        The imported class is cached globally after the first call, so subsequent
-        calls return immediately without re-importing.
-
-        Returns:
-            type: The yt-dlp YoutubeDL class object.
         """
         if self._YoutubeDL is None:
             from yt_dlp import YoutubeDL
@@ -157,43 +181,8 @@ class Download:
             _ = ydl.download([url])
 
 
-async def run_downloader(
-    url: str,
-    codec: str,
-    kbps: int,
-    quality: str,
-    jobs: int,
-    quiet: bool,
-    metadata: bool,
-    keep: bool,
-    save: bool,
-    use_config: bool,
-    path: str,
-    only_video: bool,
-    cookies: str | None,
-    remote: str,
-    color: bool,
-) -> None:
+async def run_downloader(params: DownloadParams) -> None:
     """Run downloader with given parameters."""
-
-    params = DownloadParams(
-        url=url,
-        codec=codec,
-        kbps=kbps,
-        quality=quality,
-        jobs=jobs,
-        quiet=quiet,
-        metadata=metadata,
-        keep=keep,
-        save=save,
-        use_config=use_config,
-        path=path,
-        only_video=only_video,
-        cookies=cookies,
-        remote=remote,
-        color=color,
-    )
-
     async with Download(params) as dl:
         try:
             await dl.download_all()

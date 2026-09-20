@@ -38,17 +38,6 @@ class Search:
         only_url: bool,
         color: bool,
     ):
-        """Initialize search with query parameters.
-
-        Args:
-            query: Search query string.
-            limit: Maximum number of results.
-            yt_video: Search YouTube videos instead of YouTube Music.
-            album: Search for albums instead of tracks.
-            raw: Output raw Python dicts instead of formatted strings.
-            only_url: Output only URLs without formatting.
-            color: Colored output.
-        """
         self.query = query
         self.limit = limit
         self.yt_video = yt_video
@@ -116,36 +105,3 @@ class Search:
                 yield formatter.fmt_error("Connection timeout")
             except Exception as e:
                 yield formatter.fmt_error(str(e))
-
-
-def search(
-    query: str,
-    limit: int,
-    yt_video: bool,
-    album: bool,
-    raw: bool,
-    only_url: bool,
-    color: bool,
-) -> Generator[str, None, None] | str:
-    """
-    Convenience function to search YouTube or YouTube Music.
-
-    Creates a Search instance with the given parameters and executes the search.
-    This is a thin wrapper around the Search class, providing a simpler
-    functional interface for callers who don't need to manage the Search object.
-
-    Args:
-        query (str): The search query string.
-        limit (int): Maximum number of results to return.
-        yt_video (bool): If True, search YouTube videos; if False, search YouTube Music.
-        album (bool): If True, search for albums/playlists; if False, search for tracks.
-        raw (bool): If True, output raw Python dictionaries instead of formatted strings.
-        only_url (bool): If True, output only URLs without any formatting.
-        color (bool): If True, enable ANSI color codes in output.
-
-    Returns:
-        Generator[str, None, None] | str: A generator yielding search results,
-            or an empty string if an error occurs.
-    """
-    s = Search(query, limit, yt_video, album, raw, only_url, color)
-    return s.search()

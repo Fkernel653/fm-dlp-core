@@ -7,13 +7,6 @@ from ...utils import echo_error, set_colors
 def get_config_dir(dir_name: str = "fm-dlp") -> str:
     """
     Get the user configuration directory path based on the operating system.
-
-    Args:
-        dir_name (str, optional): Name of the application directory to create
-                                  under the config root. Defaults to "fm-dlp".
-
-    Returns:
-        str: The absolute path to the configuration directory.
     """
     import os
     import sys
@@ -142,12 +135,6 @@ class TOMLSerializer:
     def _value_to_str(cls, value: Any) -> str:
         """
         Convert a Python value to its TOML string representation.
-
-        Args:
-            value: The Python value to convert.
-
-        Returns:
-            TOML string representation of the value.
         """
         if isinstance(value, str):
             return f'"{value}"'

@@ -6,7 +6,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-9cf?style=for-the-badge)](<>)
 [![Ruff](https://img.shields.io/badge/Code%20Style-Ruff-ff69b4?logo=ruff&logoColor=fff&style=for-the-badge)](https://docs.astral.sh/ruff)
 
-**fm-dlp-core** is a powerful Python library for searching and downloading content from YouTube, YouTube Music, and over 1000+ supported sites. Built on top of yt-dlp, it provides a clean, async-first API with rich features including concurrent downloads, metadata embedding, and flexible output formatting.
+**fm-dlp-core** is a powerful Python library for searching and downloading content from YouTube, YouTube Music, and over 1000+ supported sites. Built on top of yt-dlp, it provides a clean, async-first API with rich features including concurrent downloads, metadata embedding, subtitle download/embedding, arbitrary yt-dlp args passthrough, and flexible output formatting.
 
 ---
 
@@ -17,6 +17,8 @@
 - [Requirements](#-requirements)
 - [Core Concepts](#-core-concepts)
 - [Downloading Content](#-downloading-content)
+  - [Subtitles](#-subtitles)
+  - [Raw yt-dlp Arguments](#-raw-yt-dlp-arguments)
 - [Searching Content](#-searching-content)
 - [Configuration](#-configuration)
 - [API Reference](#-api-reference)
@@ -29,6 +31,7 @@
 ```python
 import asyncio
 from fm_dlp_core import search, run_downloader
+from fm_dlp_core.commands.downloader import DownloadParams
 
 # 1. Search for a track
 for result in search("Sewerslvt", limit=3, yt_video=False, album=False):
@@ -37,12 +40,23 @@ for result in search("Sewerslvt", limit=3, yt_video=False, album=False):
 # 2. Download a track
 asyncio.run(
     run_downloader(
-        url="https://music.youtube.com/watch?v=y55fzyXZDSE",
-        codec="mp3",
-        kbps=320,
-        path="./music",
-        metadata=True,
-        color=True,
+        DownloadParams(
+            url="https://music.youtube.com/watch?v=y55fzyXZDSE",
+            codec="mp3",
+            kbps=320,
+            quality="best",
+            jobs=4,
+            quiet=False,
+            metadata=True,
+            keep=False,
+            save=False,
+            use_config=False,
+            path="./music",
+            only_video=False,
+            cookies=None,
+            remote=None,
+            color=True,
+        )
     )
 )
 ```
@@ -68,7 +82,7 @@ pip install -e .
 ## ⚙️ Requirements
 
 - **Python 3.11+** - TOML support required
-- **FFmpeg** - Required for audio/video processing. Install via:
+- **FFmpeg** - Required for audio/video processing and subtitle embedding. Install via:
   - **macOS:** `brew install ffmpeg`
   - **Linux:**
     - **Debian:** `sudo apt install ffmpeg`
@@ -86,11 +100,21 @@ All download operations are asynchronous, allowing you to run multiple downloads
 
 ### Configuration Persistence
 
-Settings like codec, bitrate, quality, and download path can be saved to a TOML file and reused across sessions.
+Settings like codec, bitrate, quality, subtitle preferences, and download path can be saved to a TOML file and reused across sessions.
 
 ### Provider Pattern
 
 Search functionality is built on a provider pattern, making it easy to add support for new platforms by subclassing `BaseProvider`.
+
+### Layered yt-dlp Options
+
+The `OptionsBuilder` assembles options in priority order:
+
+1. Base options (output template, concurrency, retries)
+2. Color / cookies / remote configuration
+3. Codec-specific options (audio extraction, video conversion)
+4. Subtitle options (if `subtitles=True`)
+5. **User-provided `ytdlp_args`** — merged last, highest priority (`postprocessors` are extended, not replaced)
 
 ---
 
@@ -105,6 +129,8 @@ The download system supports:
 - **Batch downloads** from multiple URLs or text files
 - **Concurrent downloads** with configurable job limits
 - **Metadata embedding** with thumbnails
+- **Subtitle download**, including **auto-generated** subtitles, and **embedding** into the video container
+- **Arbitrary yt-dlp arguments** passthrough for advanced use cases
 
 ### DownloadParams Class
 
@@ -115,9 +141,9 @@ from fm_dlp_core.commands.downloader import DownloadParams
 
 params = DownloadParams(
     url="https://youtube.com/watch?v=...",
-    codec="mp3",
-    kbps=320,
-    quality="best",
+    codec="mp4",
+    kbps=0,
+    quality="1080p",
     jobs=4,
     quiet=False,
     metadata=True,
@@ -125,32 +151,49 @@ params = DownloadParams(
     save=False,
     use_config=False,
     path="./downloads",
-    only_video=False,
+    only_video=True,
     cookies="chrome",
     remote="ejs:github",
     color=True,
+    # --- Subtitles ---
+    subtitles=True,
+    subtitle_langs="en,ru",
+    embed_subs=True,
+    auto_subs=False,
+    # --- Raw yt-dlp args ---
+    ytdlp_args={
+        "retries": 10,
+        "fragment_retries": 10,
+        "subtitlesformat": "srt/best",
+        "postprocessors": [{"key": "FFmpegMetadata"}],
+    },
 )
 ```
 
 ### Download Parameters Reference
 
-| Parameter    | Type          | Description                                                                                                                                        |
-| ------------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `url`        | `str`         | URL(s) to download (comma/space separated or path to file)                                                                                         |
-| `codec`      | `str`         | Output format (see Supported Codecs)                                                                                                               |
-| `kbps`       | `int`         | Audio bitrate in kbps. Use `0` for lossless formats (FLAC, WAV, ALAC)                                                                              |
-| `quality`    | `str`         | Video quality: `"best"`, `"worst"`, `"1080"`, `"1080p"`, or custom format filter                                                                   |
-| `jobs`       | `int`         | Number of concurrent downloads (also controls thread/process pool size)                                                                            |
-| `quiet`      | `bool`        | Suppress output messages                                                                                                                           |
-| `metadata`   | `bool`        | Embed metadata and thumbnail. **Note:** Automatically disabled for WAV format (not supported)                                                      |
-| `keep`       | `bool`        | Keep original downloaded file (video file when extracting audio)                                                                                   |
-| `save`       | `bool`        | Save parameters to config (requires `color` parameter for config key)                                                                              |
-| `use_config` | `bool`        | Load parameters from config. Saved values take priority over instance values. Config key uses the `color` parameter value                          |
-| `path`       | `str`         | Download directory                                                                                                                                 |
-| `only_video` | `bool`        | Download video only (skip audio extraction). Uses `ProcessPoolExecutor` for video processing                                                       |
-| `cookies`    | `str \| None` | Cookies file path or browser name (`"chrome"`, `"firefox"`, `"edge"`, `"opera"`). Uses cookiefile if path exists, otherwise cookiesfrombrowser     |
-| `remote`     | `str \| None` | External JavaScript components source for bypassing anti-bot protections. Valid values: `"ejs:github"` (yt-dlp repo) or `"ejs:npm"` (NPM registry) |
-| `color`      | `bool`        | Enable colored output. Also used as the configuration key identifier for storing/retrieving settings                                               |
+| Parameter        | Type                        | Description                                                                                                                                        |
+| ---------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`            | `str`                       | URL(s) to download (comma/space separated or path to file)                                                                                         |
+| `codec`          | `str`                       | Output format (see Supported Codecs)                                                                                                               |
+| `kbps`           | `int`                       | Audio bitrate in kbps. Use `0` for lossless formats (FLAC, WAV, ALAC)                                                                              |
+| `quality`        | `str`                       | Video quality: `"best"`, `"worst"`, `"1080"`, `"1080p"`, or custom format filter                                                                   |
+| `jobs`           | `int`                       | Number of concurrent downloads (also controls thread/process pool size)                                                                            |
+| `quiet`          | `bool`                      | Suppress output messages                                                                                                                           |
+| `metadata`       | `bool`                      | Embed metadata and thumbnail. **Note:** Automatically disabled for WAV format (not supported)                                                      |
+| `keep`           | `bool`                      | Keep original downloaded file (video file when extracting audio)                                                                                   |
+| `save`           | `bool`                      | Save parameters to config (requires `color` parameter for config key)                                                                              |
+| `use_config`     | `bool`                      | Load parameters from config. Saved values take priority over instance values. Config key uses the `color` parameter value                          |
+| `path`           | `str`                       | Download directory                                                                                                                                 |
+| `only_video`     | `bool`                      | Download video only (skip audio extraction). Uses `ProcessPoolExecutor` for video processing                                                       |
+| `cookies`        | `str \| None`               | Cookies file path or browser name (`"chrome"`, `"firefox"`, `"edge"`, `"opera"`). Uses cookiefile if path exists, otherwise cookiesfrombrowser     |
+| `remote`         | `str \| None`               | External JavaScript components source for bypassing anti-bot protections. Valid values: `"ejs:github"` (yt-dlp repo) or `"ejs:npm"` (NPM registry) |
+| `color`          | `bool`                      | Enable colored output. Also used as the configuration key identifier for storing/retrieving settings                                               |
+| `subtitles`      | `bool`                      | Download subtitles (`writesubtitles`). Requires FFmpeg for embedding                                                                               |
+| `subtitle_langs` | `str`                       | Comma-separated subtitle language codes, e.g. `"en,ru,ja"` → `subtitleslangs`                                                                      |
+| `embed_subs`     | `bool`                      | Embed subtitles into the video container (`FFmpegEmbedSubtitle`). Only for video containers (mp4, mkv, webm, mov)                                  |
+| `auto_subs`      | `bool`                      | Include auto-generated subtitles (`writeautomaticsub`)                                                                                             |
+| `ytdlp_args`     | `dict[str, object] \| None` | Extra raw yt-dlp options (snake_case). Merged last; `postprocessors` are **extended**, other keys **override**                                     |
 
 ### Supported Codecs
 
@@ -168,77 +211,149 @@ The downloader automatically selects the appropriate executor type:
 
 This optimization is handled automatically based on the `only_video` flag and `codec` selection.
 
+---
+
+### 📝 Subtitles
+
+Subtitles can be downloaded alongside video/audio, saved as separate files, or embedded directly into the video container.
+
+#### How it works
+
+| Flag              | yt-dlp option(s)                                           | Effect                                           |
+| ----------------- | ---------------------------------------------------------- | ------------------------------------------------ |
+| `subtitles=True`  | `writesubtitles=True`, `subtitleslangs=[...]`              | Downloads subtitle files for the given languages |
+| `auto_subs=True`  | `writeautomaticsub=True`                                   | Includes auto-generated subtitles                |
+| `embed_subs=True` | `embedsubtitles=True`, postprocessor `FFmpegEmbedSubtitle` | Muxes subtitles into the video container         |
+
+> ⚠️ **Embedding caveats**
+>
+> - Requires FFmpeg.
+> - Only makes sense for **video** codecs (`mp4`, `mkv`, `webm`, `mov`) or when `only_video=True`.
+> - For audio-only codecs (mp3, flac, etc.) `embed_subs` is silently skipped.
+
+#### Language selection
+
+`subtitle_langs` is a **comma-separated** string, e.g. `"en,ru,ja"`. Whitespace is stripped. If empty, defaults to `["en"]`.
+
 <details>
-<summary><b>📖 Click for examples</b></summary>
+<summary><b>📖 Subtitle examples</b></summary>
 
-**Basic Usage with run_downloader**
-
-```python
-import asyncio
-from fm_dlp_core import run_downloader
-
-asyncio.run(
-    run_downloader(
-        url="https://youtube.com/watch?v=VIDEO_ID",
-        codec="mp3",
-        kbps=192,
-        path="./downloads",
-    )
-)
-```
-
----
-
-**Advanced Usage with Download Class**
+**Download video with English + Russian subtitles embedded into MKV**
 
 ```python
 from fm_dlp_core.commands.downloader import Download, DownloadParams
 
+params = DownloadParams(
+    url="https://youtube.com/watch?v=VIDEO_ID",
+    codec="mkv",
+    kbps=0,
+    quality="1080p",
+    jobs=1,
+    quiet=False,
+    metadata=True,
+    keep=False,
+    save=False,
+    use_config=False,
+    path="./videos",
+    only_video=True,
+    cookies=None,
+    remote="ejs:github",
+    color=True,
+    subtitles=True,
+    subtitle_langs="en,ru",
+    embed_subs=True,
+    auto_subs=False,
+)
 
-async def download_video():
-    params = DownloadParams(
-        url="https://youtube.com/watch?v=VIDEO_ID",
-        codec="mp4",
-        quality="1080p",
-        jobs=4,
-        path="./videos",
-        metadata=True,
-        only_video=True,
-        remote="ejs:github",
-        color=True,
-    )
-
-    async with Download(params) as downloader:
-        await downloader.download_all()
+async with Download(params) as dl:
+    await dl.download_all()
 ```
 
 ---
 
-**Batch Downloads**
+**Download audio with subtitles saved as separate .srt files**
 
 ```python
-from fm_dlp_core.commands.downloader import Download, DownloadParams
-
-# Multiple URLs (comma or space separated)
 params = DownloadParams(
-    url="url1,url2,url3",  # or "url1 url2 url3"
-    codec="flac",
-    kbps=0,  # Lossless
-    jobs=3,
+    url="https://youtube.com/watch?v=VIDEO_ID",
+    codec="mp3",
+    kbps=320,
+    quality="best",
+    jobs=2,
+    quiet=False,
+    metadata=True,
+    keep=False,
+    save=False,
+    use_config=False,
+    path="./audio",
+    only_video=False,
+    cookies=None,
+    remote=None,
+    color=True,
+    subtitles=True,
+    subtitle_langs="en",
+    embed_subs=False,   # audio → embedding is skipped anyway
+    auto_subs=True,     # include auto-generated
 )
+```
 
-async with Download(params) as downloader:
-    await downloader.download_all()
+</details>
 
-# URLs from a text file (one per line, comma/space separated supported)
+---
+
+### 🧩 Raw yt-dlp Arguments
+
+For anything not covered by the high-level API, you can pass arbitrary yt-dlp options via `ytdlp_args`.
+
+#### Rules
+
+- Keys are **snake_case** yt-dlp option names (the same keys used by `YoutubeDL(opts)`).
+- Options are merged **last** into the built options dict → they **override** existing values.
+- **Exception:** `postprocessors` are **extended** (built-in postprocessors are preserved) rather than replaced.
+
+<details>
+<summary><b>📖 yt-dlp args examples</b></summary>
+
+**Add retries and a custom subtitle format**
+
+```python
 params = DownloadParams(
-    url="urls.txt",
-    codec="m4a",
-    kbps=256,
+    # ... required fields ...
+    ytdlp_args={
+        "retries": 10,
+        "fragment_retries": 10,
+        "subtitlesformat": "srt/best",
+    },
 )
+```
 
-async with Download(params) as downloader:
-    await downloader.download_all()
+**Extend postprocessors without losing built-ins**
+
+```python
+params = DownloadParams(
+    # ... required fields ...
+    ytdlp_args={
+        "postprocessors": [
+            {"key": "FFmpegMetadata"},
+            {"key": "SponsorBlock", "categories": ["sponsor"]},
+        ],
+    },
+)
+# Built-in postprocessors (e.g. FFmpegExtractAudio / FFmpegVideoConvertor)
+# are preserved and the custom ones are appended.
+```
+
+**Rate-limit requests**
+
+```python
+params = DownloadParams(
+    # ... required fields ...
+    ytdlp_args={
+        "sleep_interval_requests": 1,
+        "sleep_interval": 2,
+        "max_sleep_interval": 5,
+    },
+)
 ```
 
 </details>
@@ -283,15 +398,15 @@ The search system supports:
 **YouTube Music Search (Tracks)**
 
 ```python
-from fm_dlp_core import search
+from fm_dlp_core import Search
 
-for result in search(
+for result in Search(
     query="Sewerslvt",
     limit=5,
     yt_video=False,  # Use YouTube Music
-    album=False,  # Search for tracks
+    album=False,     # Search for tracks
     color=True,
-):
+).search():
     print(result)
 ```
 
@@ -300,12 +415,12 @@ for result in search(
 **YouTube Video Search**
 
 ```python
-for result in search(
+for result in Search(
     query="Python tutorial",
     limit=5,
     yt_video=True,  # Use YouTube (videos)
     album=False,
-):
+).search():
     print(result)
 ```
 
@@ -314,13 +429,35 @@ for result in search(
 **URL-Only Output**
 
 ```python
+from fm_dlp_core.commands.downloader import DownloadParams
+
 # Get only URLs
 urls = list(search("breakcore", limit=10, only_url=True))
 
 # Chain search → download
 urls = list(search("chill beats", limit=5, only_url=True))
 if urls:
-    asyncio.run(run_downloader(url=" ".join(urls), codec="mp3", kbps=320))
+    asyncio.run(
+        run_downloader(
+            DownloadParams(
+                url=" ".join(urls),
+                codec="mp3",
+                kbps=320,
+                quality="best",
+                jobs=4,
+                quiet=False,
+                metadata=True,
+                keep=False,
+                save=False,
+                use_config=False,
+                path="./music",
+                only_video=False,
+                cookies=None,
+                remote=None,
+                color=True,
+            )
+        )
+    )
 ```
 
 </details>
@@ -338,6 +475,8 @@ The configuration system provides:
 - **Download path** — Set default download directory (stored separately)
 - **TOML format** — Human-readable config file
 - **Cookie support** — Browser cookies for restricted content
+- **Subtitle preferences** — Persist subtitle/auto-sub/embed settings and languages
+- **Raw yt-dlp args** — Persist advanced overrides
 
 ### Configuration File Location
 
@@ -383,7 +522,15 @@ from fm_dlp_core.utils.config import TOMLSerializer
 
 data = {
     "path": "/downloads",
-    "parameters": {"codec": "mp3", "kbps": 320, "quality": "best"},
+    "parameters": {
+        "codec": "mp3",
+        "kbps": 320,
+        "quality": "best",
+        "subtitles": True,
+        "subtitle_langs": "en,ru",
+        "embed_subs": True,
+        "auto_subs": False,
+    },
 }
 toml_string = TOMLSerializer.dumps(data)
 print(toml_string)
@@ -394,6 +541,10 @@ print(toml_string)
 # codec = "mp3"
 # kbps = 320
 # quality = "best"
+# subtitles = true
+# subtitle_langs = "en,ru"
+# embed_subs = true
+# auto_subs = false
 #
 ```
 
@@ -408,30 +559,47 @@ print(toml_string)
 
 ### ParametersManager Class
 
-Manages the `[parameters]` section — codec, bitrate, quality, jobs, boolean flags, cookies, and remote URL.
+Manages the `[parameters]` section — codec, bitrate, quality, jobs, boolean flags, cookies, remote URL, subtitles, and raw yt-dlp args.
+
+> **Note:** `set_parameters()` now accepts a single `DownloadParams` instance.
 
 ```python
+from fm_dlp_core.commands.downloader import DownloadParams
 from fm_dlp_core.utils.config import ParametersManager
 
 manager = ParametersManager(color=True)
 
-# Save parameters
+# Save parameters (pass a DownloadParams instance)
 manager.set_parameters(
-    codec="mp3",
-    kbps=320,
-    quality="best",
-    jobs=4,
-    quiet=False,
-    metadata=True,
-    keep=False,
-    only_video=False,
-    cookies="firefox",
-    remote="ejs:github",
+    DownloadParams(
+        url="",  # URL is intentionally not persisted
+        codec="mp4",
+        kbps=0,
+        quality="1080p",
+        jobs=4,
+        quiet=False,
+        metadata=True,
+        keep=False,
+        save=True,
+        use_config=False,
+        path="./videos",
+        only_video=True,
+        cookies="firefox",
+        remote="ejs:github",
+        color=True,
+        subtitles=True,
+        subtitle_langs="en,ru",
+        embed_subs=True,
+        auto_subs=False,
+        ytdlp_args={"retries": 10},
+    )
 )
 
 # Retrieve parameters
 params = manager.get_parameters()
-print(params["codec"])  # 'mp3'
+print(params["codec"])           # 'mp4'
+print(params["subtitles"])       # True
+print(params["subtitle_langs"])  # 'en,ru'
 ```
 
 ### PathManager Class
@@ -506,6 +674,8 @@ new_config = {
         "quality": "best",
         "jobs": 4,
         "metadata": True,
+        "subtitles": True,
+        "subtitle_langs": "en,ru",
     },
 }
 success = manager.update_config(new_config)
@@ -517,17 +687,26 @@ if success:
 **Automatic Profile Management**
 
 ```python
+from fm_dlp_core.commands.downloader import DownloadParams
 from fm_dlp_core.utils.config import ParametersManager
 
 # Save different profiles (keyed by the color flag)
 ParametersManager(color=True).set_parameters(
-    codec="flac", kbps=0, quality="best", jobs=8,
-    quiet=False, metadata=True, keep=False, only_video=False,
+    DownloadParams(
+        url="", codec="flac", kbps=0, quality="best", jobs=8,
+        quiet=False, metadata=True, keep=False, save=True, use_config=False,
+        path="./music", only_video=False, cookies=None, remote=None, color=True,
+        subtitles=True, subtitle_langs="en,ru", embed_subs=True, auto_subs=False,
+    )
 )
 
 ParametersManager(color=False).set_parameters(
-    codec="aac", kbps=128, quality="720p", jobs=2,
-    quiet=True, metadata=True, keep=False, only_video=False,
+    DownloadParams(
+        url="", codec="aac", kbps=128, quality="720p", jobs=2,
+        quiet=True, metadata=True, keep=False, save=True, use_config=False,
+        path="./mobile", only_video=False, cookies=None, remote=None, color=False,
+        subtitles=False, subtitle_langs="en", embed_subs=False, auto_subs=False,
+    )
 )
 
 # Load specific profiles
@@ -554,6 +733,10 @@ keep = false
 only_video = false
 cookies = "firefox"
 remote = "ejs:github"
+subtitles = true
+subtitle_langs = "en,ru"
+embed_subs = false
+auto_subs = true
 
 [parameters_0]  # Profile for color=False
 codec = "mp3"
@@ -566,6 +749,10 @@ keep = false
 only_video = false
 cookies = "chrome"
 remote = "ejs:github"
+subtitles = false
+subtitle_langs = "en"
+embed_subs = false
+auto_subs = false
 ```
 
 ---
@@ -575,25 +762,56 @@ remote = "ejs:github"
 ```python
 import asyncio
 from fm_dlp_core import run_downloader
+from fm_dlp_core.commands.downloader import DownloadParams
 
 # This will automatically load saved config if use_config=True
 asyncio.run(
     run_downloader(
-        url="https://youtube.com/watch?v=...",
-        codec="mp3",  # Will be overridden by saved config if use_config=True
-        use_config=True,
-        color=True,  # Determines which profile to load
+        DownloadParams(
+            url="https://youtube.com/watch?v=...",
+            codec="mp3",       # Will be overridden by saved config if use_config=True
+            kbps=0,
+            quality="best",
+            jobs=1,
+            quiet=False,
+            metadata=True,
+            keep=False,
+            save=False,
+            use_config=True,
+            path="./downloads",
+            only_video=False,
+            cookies=None,
+            remote=None,
+            color=True,        # Determines which profile to load
+        )
     )
 )
 
 # Save current parameters for future use
 asyncio.run(
     run_downloader(
-        url="https://youtube.com/watch?v=...",
-        codec="flac",
-        kbps=0,
-        save=True,  # Save these parameters
-        color=True,
+        DownloadParams(
+            url="https://youtube.com/watch?v=...",
+            codec="flac",
+            kbps=0,
+            quality="best",
+            jobs=4,
+            quiet=False,
+            metadata=True,
+            keep=False,
+            save=True,         # Save these parameters
+            use_config=False,
+            path="./music",
+            only_video=False,
+            cookies=None,
+            remote=None,
+            color=True,
+            subtitles=True,
+            subtitle_langs="en,ru",
+            embed_subs=True,
+            auto_subs=False,
+            ytdlp_args={"retries": 10},
+        )
     )
 )
 ```

@@ -27,6 +27,11 @@ class DownloadParams:
         cookies: Path to Netscape-format cookies file (optional).
         remote: Remote destination path for uploads (optional).
         color: Enable colored console output if True.
+        subtitles: Download subtitles if True.
+        subtitle_langs: Comma-separated subtitle language codes (e.g. 'en,ru').
+        embed_subs: Embed subtitles into the video container if True.
+        auto_subs: Include auto-generated subtitles if True.
+        ytdlp_args: Additional raw yt-dlp CLI-style arguments (optional).
     """
 
     url: str
@@ -43,4 +48,9 @@ class DownloadParams:
     only_video: bool
     cookies: str | None
     remote: str | None
+    subtitles: bool
+    subtitle_langs: str
+    embed_subs: bool
+    auto_subs: bool
     color: bool
+    ytdlp_args: dict[str, object] | None

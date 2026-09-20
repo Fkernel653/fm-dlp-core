@@ -45,44 +45,13 @@ VIDEO_CONTAINER_AUDIO_MAP = {
 def echo(text: str, file: TextIO = sys.stdout) -> None:
     """
     Print a message to the specified output stream with a newline.
-
-    This is a convenience wrapper around file.write() that ensures
-    consistent newline handling across the application.
-
-    Args:
-        text: The message to print.
-        file: The output stream to write to. Defaults to stdout.
-
-    Example:
-        >>> echo("Processing complete")
-        Processing complete
-        >>> import sys
-        >>> echo("Error message", file=sys.stderr)
-        Error message
     """
     file.write(text + "\n")
 
 
 def echo_error(text: str, exit: bool = True) -> None:
-    """Print an error message to stderr and terminate execution.
-
-    The error message is formatted with the standard error style
-    (typically red) and written to stderr. If `exit` is True,
-    sys.exit(1) is called to halt the program with a non-zero
-    exit code.
-
-    Args:
-        text: The error message to display.
-        exit: Whether to terminate the program. If True, sys.exit(1)
-            is called; (default: True)
-
-    Example:
-        >>> echo_error("File not found", exit=True)
-        [ERROR] File not found  # formatted in red
-        # Program exits with code 1
-
-        >>> echo_error("File not found", exit=False)
-        [ERROR] File not found  # formatted in red
+    """
+    Print an error message to stderr and terminate execution.
     """
     echo(error(text), file=sys.stderr)
     if exit:

@@ -24,7 +24,7 @@ Package Structure:
         config/       - Configuration management for paths and parameters
 
 Exported Symbols:
-    Download, run_downloader   - Async download functionality
+    Download, DownloadParams, run_downloader   - Async download functionality
     Search, search             - Search capabilities
     ALL_CODECS                 - Complete list of supported codecs/formats
     AUDIO_CODECS               - Audio-only codec formats
@@ -39,8 +39,8 @@ Requirements:
 For more information, visit: https://github.com/Fkernel653/fm-dlp-core
 """
 
-from .commands.downloader.downloader import Download, run_downloader
-from .commands.search import Search, search
+from .commands.downloader.downloader import Download, DownloadParams, run_downloader
+from .commands.search import Search
 from .utils import (
     ALL_CODECS,
     AUDIO_CODECS,
@@ -55,8 +55,8 @@ __all__ = [
     "VIDEO_CONTAINERS",
     "VIDEO_CONTAINER_AUDIO_MAP",
     "Download",
+    "DownloadParams",
     "Search",
     "echo",
     "run_downloader",
-    "search",
 ]

@@ -18,16 +18,6 @@ class OptionsBuilder:
     def _parse_quality(self) -> str:
         """
         Parse the quality string into a yt-dlp format filter expression.
-
-        Supports the following formats:
-        - "best" → returns "bestvideo" (highest available video quality)
-        - "worst" → returns "worstvideo" (lowest available video quality)
-        - Numeric height (e.g., "1080") → selects best video with height ≤ that value
-        - Height with "p" suffix (e.g., "1080p") → same as numeric (strips "p")
-        - Any other string → returned as-is (treated as custom format filter)
-
-        Returns:
-            str: A format filter string compatible with yt-dlp's --format option.
         """
         if self.params.quality == "best":
             return "bestvideo"
@@ -52,8 +42,10 @@ class OptionsBuilder:
         1. Setting base options (output template, concurrent downloads, retries)
         2. Configuring color output based on the `color` flag
         3. Adding cookie handling (from file or browser) if provided
-        4. Delegating to specialized builders for video-only or audio download
+        4. Adding subtitle options if enabled
+        5. Delegating to specialized builders for video-only or audio download
            configurations with appropriate codec conversions and post-processors
+        6. Merging user-provided raw yt-dlp arguments (highest priority)
 
         Returns:
             dict[str, Any]: A complete yt-dlp options dictionary ready to be passed
@@ -83,6 +75,10 @@ class OptionsBuilder:
         else:
             self._build_audio_opts(base_opts)
 
+        self._add_subtitles(base_opts)
+
+        self._merge_user_args(base_opts)
+
         return base_opts
 
     def _add_cookies(self, opts: dict[str, Any]) -> None:
@@ -93,6 +89,51 @@ class OptionsBuilder:
                 opts["cookiefile"] = str(cookie_path)
             else:
                 opts["cookiesfrombrowser"] = (self.params.cookies,)
+
+    def _add_subtitles(self, opts: dict[str, Any]) -> None:
+        """
+        Add subtitle-related options to the yt-dlp options dictionary.
+        """
+        if not self.params.subtitles:
+            return
+
+        langs = [
+            lang.strip()
+            for lang in self.params.subtitle_langs.split(",")
+            if lang.strip()
+        ] or ["en"]
+
+        opts["writesubtitles"] = True
+        opts["subtitleslangs"] = langs
+        opts["writeautomaticsub"] = bool(self.params.auto_subs)
+
+        if self.params.embed_subs:
+            codec_is_video = (
+                self.params.codec in VIDEO_CONTAINERS or self.params.only_video
+            )
+            if not codec_is_video:
+                return
+
+            opts["embedsubtitles"] = True
+            opts.setdefault("postprocessors", []).append({"key": "FFmpegEmbedSubtitle"})
+
+    def _merge_user_args(self, opts: dict[str, Any]) -> None:
+        """
+        Merge user-provided raw yt-dlp arguments into the options dictionary.
+        """
+        if not self.params.ytdlp_args:
+            return
+
+        for key, value in self.params.ytdlp_args.items():
+            if key == "postprocessors":
+                existing = opts.get("postprocessors", [])
+                if isinstance(value, list):
+                    existing.extend(value)
+                else:
+                    existing.append(value)
+                opts["postprocessors"] = existing
+            else:
+                opts[key] = value
 
     def _build_video_opts(self, opts: dict[str, Any]) -> None:
         """Build options for video-only download."""

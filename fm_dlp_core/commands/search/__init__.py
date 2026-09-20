@@ -23,7 +23,7 @@ Functions:
 
 from .formatters import ResultFormatter
 from .providers import BaseProvider, YouTubeMusicProvider, YouTubeProvider
-from .search import Search, search
+from .search import Search
 
 __all__ = [
     "BaseProvider",
@@ -31,5 +31,4 @@ __all__ = [
     "Search",
     "YouTubeMusicProvider",
     "YouTubeProvider",
-    "search",
 ]
