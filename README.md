@@ -153,7 +153,7 @@ params = DownloadParams(
     path="./downloads",
     only_video=True,
     cookies="chrome",
-    remote="ejs:github",
+    remote="github",
     color=True,
     # --- Subtitles ---
     subtitles=True,
@@ -172,28 +172,28 @@ params = DownloadParams(
 
 ### Download Parameters Reference
 
-| Parameter        | Type                        | Description                                                                                                                                        |
-| ---------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `url`            | `str`                       | URL(s) to download (comma/space separated or path to file)                                                                                         |
-| `codec`          | `str`                       | Output format (see Supported Codecs)                                                                                                               |
-| `kbps`           | `int`                       | Audio bitrate in kbps. Use `0` for lossless formats (FLAC, WAV, ALAC)                                                                              |
-| `quality`        | `str`                       | Video quality: `"best"`, `"worst"`, `"1080"`, `"1080p"`, or custom format filter                                                                   |
-| `jobs`           | `int`                       | Number of concurrent downloads (also controls thread/process pool size)                                                                            |
-| `quiet`          | `bool`                      | Suppress output messages                                                                                                                           |
-| `metadata`       | `bool`                      | Embed metadata and thumbnail. **Note:** Automatically disabled for WAV format (not supported)                                                      |
-| `keep`           | `bool`                      | Keep original downloaded file (video file when extracting audio)                                                                                   |
-| `save`           | `bool`                      | Save parameters to config (requires `color` parameter for config key)                                                                              |
-| `use_config`     | `bool`                      | Load parameters from config. Saved values take priority over instance values. Config key uses the `color` parameter value                          |
-| `path`           | `str`                       | Download directory                                                                                                                                 |
-| `only_video`     | `bool`                      | Download video only (skip audio extraction). Uses `ProcessPoolExecutor` for video processing                                                       |
-| `cookies`        | `str \| None`               | Cookies file path or browser name (`"chrome"`, `"firefox"`, `"edge"`, `"opera"`). Uses cookiefile if path exists, otherwise cookiesfrombrowser     |
-| `remote`         | `str \| None`               | External JavaScript components source for bypassing anti-bot protections. Valid values: `"ejs:github"` (yt-dlp repo) or `"ejs:npm"` (NPM registry) |
-| `color`          | `bool`                      | Enable colored output. Also used as the configuration key identifier for storing/retrieving settings                                               |
-| `subtitles`      | `bool`                      | Download subtitles (`writesubtitles`). Requires FFmpeg for embedding                                                                               |
-| `subtitle_langs` | `str`                       | Comma-separated subtitle language codes, e.g. `"en,ru,ja"` → `subtitleslangs`                                                                      |
-| `embed_subs`     | `bool`                      | Embed subtitles into the video container (`FFmpegEmbedSubtitle`). Only for video containers (mp4, mkv, webm, mov)                                  |
-| `auto_subs`      | `bool`                      | Include auto-generated subtitles (`writeautomaticsub`)                                                                                             |
-| `ytdlp_args`     | `dict[str, object] \| None` | Extra raw yt-dlp options (snake_case). Merged last; `postprocessors` are **extended**, other keys **override**                                     |
+| Parameter        | Type                        | Description                                                                                                                                    |
+| ---------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`            | `str`                       | URL(s) to download (comma/space separated or path to file)                                                                                     |
+| `codec`          | `str`                       | Output format (see Supported Codecs)                                                                                                           |
+| `kbps`           | `int`                       | Audio bitrate in kbps. Use `0` for lossless formats (FLAC, WAV, ALAC)                                                                          |
+| `quality`        | `str`                       | Video quality: `"best"`, `"worst"`, `"1080"`, `"1080p"`, or custom format filter                                                               |
+| `jobs`           | `int`                       | Number of concurrent downloads (also controls thread/process pool size)                                                                        |
+| `quiet`          | `bool`                      | Suppress output messages                                                                                                                       |
+| `metadata`       | `bool`                      | Embed metadata and thumbnail. **Note:** Automatically disabled for WAV format (not supported)                                                  |
+| `keep`           | `bool`                      | Keep original downloaded file (video file when extracting audio)                                                                               |
+| `save`           | `bool`                      | Save parameters to config (requires `color` parameter for config key)                                                                          |
+| `use_config`     | `bool`                      | Load parameters from config. Saved values take priority over instance values. Config key uses the `color` parameter value                      |
+| `path`           | `str`                       | Download directory                                                                                                                             |
+| `only_video`     | `bool`                      | Download video only (skip audio extraction). Uses `ProcessPoolExecutor` for video processing                                                   |
+| `cookies`        | `str \| None`               | Cookies file path or browser name (`"chrome"`, `"firefox"`, `"edge"`, `"opera"`). Uses cookiefile if path exists, otherwise cookiesfrombrowser |
+| `remote`         | `str \| None`               | External JavaScript components source for bypassing anti-bot protections. Valid values: `"github"` (yt-dlp repo) or `"npm"` (NPM registry)     |
+| `color`          | `bool`                      | Enable colored output. Also used as the configuration key identifier for storing/retrieving settings                                           |
+| `subtitles`      | `bool`                      | Download subtitles (`writesubtitles`). Requires FFmpeg for embedding                                                                           |
+| `subtitle_langs` | `str`                       | Comma-separated subtitle language codes, e.g. `"en,ru,ja"` → `subtitleslangs`                                                                  |
+| `embed_subs`     | `bool`                      | Embed subtitles into the video container (`FFmpegEmbedSubtitle`). Only for video containers (mp4, mkv, webm, mov)                              |
+| `auto_subs`      | `bool`                      | Include auto-generated subtitles (`writeautomaticsub`)                                                                                         |
+| `ytdlp_args`     | `dict[str, object] \| None` | Extra raw yt-dlp options (snake_case). Merged last; `postprocessors` are **extended**, other keys **override**                                 |
 
 ### Supported Codecs
 
@@ -257,7 +257,7 @@ params = DownloadParams(
     path="./videos",
     only_video=True,
     cookies=None,
-    remote="ejs:github",
+    remote="github",
     color=True,
     subtitles=True,
     subtitle_langs="en,ru",
@@ -585,7 +585,7 @@ manager.set_parameters(
         path="./videos",
         only_video=True,
         cookies="firefox",
-        remote="ejs:github",
+        remote="github",
         color=True,
         subtitles=True,
         subtitle_langs="en,ru",
@@ -732,7 +732,7 @@ metadata = true
 keep = false
 only_video = false
 cookies = "firefox"
-remote = "ejs:github"
+remote = "github"
 subtitles = true
 subtitle_langs = "en,ru"
 embed_subs = false
@@ -748,7 +748,7 @@ metadata = true
 keep = false
 only_video = false
 cookies = "chrome"
-remote = "ejs:github"
+remote = "github"
 subtitles = false
 subtitle_langs = "en"
 embed_subs = false
