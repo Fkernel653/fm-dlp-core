@@ -16,9 +16,6 @@ class OptionsBuilder:
         self.params = params
 
     def _parse_quality(self) -> str:
-        """
-        Parse the quality string into a yt-dlp format filter expression.
-        """
         if self.params.quality == "best":
             return "bestvideo"
         if self.params.quality == "worst":
@@ -63,7 +60,8 @@ class OptionsBuilder:
         }
 
         if self.params.remote:
-            base_opts["remote"] = [self.params.remote]
+            params = "ejs:npm" if self.params.remote == "npm" else "ejs:github"
+            base_opts["remote"] = [params]
 
         if not self.params.color:
             base_opts["color"] = "never"
@@ -82,7 +80,6 @@ class OptionsBuilder:
         return base_opts
 
     def _add_cookies(self, opts: dict[str, Any]) -> None:
-        """Add cookie configuration to options."""
         if self.params.cookies:
             cookie_path = Path(self.params.cookies)
             if cookie_path.is_file():
@@ -91,9 +88,6 @@ class OptionsBuilder:
                 opts["cookiesfrombrowser"] = (self.params.cookies,)
 
     def _add_subtitles(self, opts: dict[str, Any]) -> None:
-        """
-        Add subtitle-related options to the yt-dlp options dictionary.
-        """
         if not self.params.subtitles:
             return
 
@@ -118,9 +112,6 @@ class OptionsBuilder:
             opts.setdefault("postprocessors", []).append({"key": "FFmpegEmbedSubtitle"})
 
     def _merge_user_args(self, opts: dict[str, Any]) -> None:
-        """
-        Merge user-provided raw yt-dlp arguments into the options dictionary.
-        """
         if not self.params.ytdlp_args:
             return
 
@@ -136,7 +127,6 @@ class OptionsBuilder:
                 opts[key] = value
 
     def _build_video_opts(self, opts: dict[str, Any]) -> None:
-        """Build options for video-only download."""
         opts["format"] = self._parse_quality()
 
         if self.params.codec in VIDEO_CONTAINERS:
@@ -148,15 +138,12 @@ class OptionsBuilder:
             )
 
     def _build_audio_opts(self, opts: dict[str, Any]) -> None:
-        """Build options for audio download."""
-
         if self.params.codec in AUDIO_CODECS:
             self._build_audio_only_opts(opts)
         elif self.params.codec in VIDEO_CONTAINERS:
             self._build_video_with_audio_opts(opts)
 
     def _build_audio_only_opts(self, opts: dict[str, Any]) -> None:
-        """Build options for audio-only download."""
         opts["format"] = "bestaudio/best"
         opts["postprocessors"].append(
             {
@@ -177,7 +164,6 @@ class OptionsBuilder:
             opts["writethumbnail"] = True
 
     def _build_video_with_audio_opts(self, opts: dict[str, Any]) -> None:
-        """Build options for video download with audio."""
         audio_ext = VIDEO_CONTAINER_AUDIO_MAP[self.params.codec]
 
         opts["format"] = f"{self._parse_quality()}+bestaudio[ext={audio_ext}]/best"
