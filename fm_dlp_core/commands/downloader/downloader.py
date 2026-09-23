@@ -103,9 +103,6 @@ class Download:
         self._YoutubeDL = None
 
     def _get_executor(self):
-        """
-        Select the appropriate executor type based on the download task.
-        """
         from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
         if self.only_video or self.codec in VIDEO_CONTAINERS:
@@ -114,20 +111,16 @@ class Download:
             return ThreadPoolExecutor(max_workers=self.jobs)
 
     async def __aenter__(self):
-        """Enter the async context manager and return the downloader instance."""
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Cleanup thread pool executor on context exit."""
         self._executor.shutdown(wait=True, cancel_futures=False)
         return False
 
     def __aiter__(self):
-        """Return async iterator for download results."""
         return self._aiter()
 
     async def _aiter(self):
-        """Async iterator yielding download results with concurrency control."""
         sem = asyncio.Semaphore(self.jobs)
 
         async def download_one(url: str):
@@ -147,9 +140,6 @@ class Download:
                 echo(result)
 
     async def _download_url(self, url: str) -> str | None:
-        """
-        Download a single URL asynchronously and return a status message.
-        """
         if self.codec == "wav" and self.metadata:
             self.metadata = False
             if not self.quiet:
@@ -162,10 +152,7 @@ class Download:
 
         return f"\n{success(url)}\n" if not self.quiet else None
 
-    def get_ytdlp(self):
-        """
-        Lazily import and return the yt-dlp YoutubeDL class.
-        """
+    def _get_ytdlp(self):
         if self._YoutubeDL is None:
             from yt_dlp import YoutubeDL
 
@@ -176,7 +163,7 @@ class Download:
         """Synchronous download using yt-dlp (runs in thread pool)."""
         options = OptionsBuilder(self.params).build()
 
-        YoutubeDL = self.get_ytdlp()
+        YoutubeDL = self._get_ytdlp()
         with YoutubeDL(options) as ydl:
             _ = ydl.download([url])
 

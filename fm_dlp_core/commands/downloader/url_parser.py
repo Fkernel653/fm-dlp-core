@@ -22,9 +22,6 @@ class URLParser:
         return [u.strip() for u in self.urls.replace(",", " ").split() if u.strip()]
 
     def _parse_url_file(self, file_path: Path) -> list[str]:
-        """
-        Read and parse URLs from a text file with robust error handling.
-        """
         urls_from_file: list[str] = []
 
         try:

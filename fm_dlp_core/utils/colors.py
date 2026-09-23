@@ -17,36 +17,28 @@ def set_colors(enabled: bool):
 
 
 def styled(text: str, color: str) -> str:
-    """
-    Apply ANSI color codes to text if color output is enabled.
-    """
+    """Apply ANSI color codes to text if color output is enabled."""
     if colors_enabled:
         return color + text + RESET
     return text
 
 
 def success(text: str, prefix: str = "Success: ") -> str:
-    """
-    Format text as a success message with bold green coloring.
-    """
+    """Format text as a success message with bold green coloring."""
     if colors_enabled:
         return BOLD_GREEN + prefix + RESET + text
     return prefix + text
 
 
 def error(text: str, prefix: str = "Error: ") -> str:
-    """
-    Format text as an error message with bold red coloring.
-    """
+    """Format text as an error message with bold red coloring."""
     if colors_enabled:
         return BOLD_RED + prefix + RESET + text
     return prefix + text
 
 
 def info(text: str, prefix: str = "Info: ") -> str:
-    """
-    Format text as an informational message with bold cyan coloring.
-    """
+    """Format text as an informational message with bold cyan coloring."""
     if colors_enabled:
         return BOLD_CYAN + prefix + RESET + text
     return prefix + text

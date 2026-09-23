@@ -5,9 +5,7 @@ from ...utils import echo_error, set_colors
 
 
 def get_config_dir(dir_name: str = "fm-dlp") -> str:
-    """
-    Get the user configuration directory path based on the operating system.
-    """
+    """Get the user configuration directory path based on the operating system."""
     import os
     import sys
 
@@ -133,9 +131,6 @@ class TOMLSerializer:
 
     @classmethod
     def _value_to_str(cls, value: Any) -> str:
-        """
-        Convert a Python value to its TOML string representation.
-        """
         if isinstance(value, str):
             return f'"{value}"'
         elif isinstance(value, bool):

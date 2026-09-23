@@ -110,7 +110,6 @@ class YouTubeProvider(BaseProvider):
 
     @staticmethod
     def _ytdl_opts() -> dict[str, Any]:
-        """Get yt-dlp options for YouTube extraction."""
         return {
             "quiet": True,
             "extract_flat": True,

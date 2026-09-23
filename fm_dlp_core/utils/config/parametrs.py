@@ -125,9 +125,6 @@ class ParametersManager:
         error_result: bool | None = None,
         success_result: bool | None = None,
     ) -> None:
-        """
-        Print a message unless quiet mode is enabled.
-        """
         if not quiet:
             if error_result:
                 echo_error(text)
