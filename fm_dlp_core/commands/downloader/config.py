@@ -1,5 +1,7 @@
 from typing import Any
 
+from fm_dlp_core.utils.config.params import ConfigParams
+
 from ...utils.config.parametrs import ParametersManager
 from .params import DownloadParams
 
@@ -9,7 +11,9 @@ class DownloadConfig:
 
     def __init__(self, params: DownloadParams):
         self.params = params
-        self.params_manager = ParametersManager(params.color)
+        self.params_manager = ParametersManager(
+            ConfigParams(params.quiet, params.color, params.config_file)
+        )
 
     def apply_config(self) -> dict[str, Any]:
         """
@@ -36,6 +40,7 @@ class DownloadConfig:
                 "quiet": conf.get("quiet", self.params.quiet),
                 "metadata": conf.get("metadata", self.params.metadata),
                 "keep": conf.get("keep", self.params.keep),
+                "ffmpeg_path": conf.get("ffmpeg_path", self.params.ffmpeg_path),
                 "only_video": conf.get("only_video", self.params.only_video),
                 "cookies": conf.get("cookies", self.params.cookies),
                 "remote": conf.get("remote", self.params.remote),
@@ -55,6 +60,7 @@ class DownloadConfig:
             "quiet": self.params.quiet,
             "metadata": self.params.metadata,
             "keep": self.params.keep,
+            "ffmpeg_path": self.params.ffmpeg_path,
             "only_video": self.params.only_video,
             "cookies": self.params.cookies,
             "remote": self.params.remote,
@@ -65,7 +71,7 @@ class DownloadConfig:
             "ytdlp_args": self.params.ytdlp_args,
         }
 
-    def save_config(self) -> bool:
+    def save_config(self) -> None:
         """
         Save current download settings to the persistent configuration file.
 
@@ -79,5 +85,4 @@ class DownloadConfig:
                 (no operation needed), False if an error occurred during saving.
         """
         if self.params.save:
-            return self.params_manager.set_parameters(self.params)
-        return True
+            self.params_manager.set_parameters(self.params)

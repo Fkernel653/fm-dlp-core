@@ -38,65 +38,17 @@ class Download:
         - Supports subtitle download/embedding and arbitrary yt-dlp args.
 
     Args:
-        params (DownloadParams): Download parameters including URL, codec,
-            quality, number of jobs, metadata/quiet/keep flags, save path,
-            cookies, remote storage, subtitles, and raw yt-dlp args.
-
-    Attributes:
-        params (DownloadParams): The original download parameters.
-        config (DownloadConfig): Configuration derived from the parameters.
-        codec (str): Selected audio/video codec.
-        kbps (int): Audio bitrate in kbps.
-        quality (str): Desired video quality.
-        jobs (int): Maximum number of concurrent downloads.
-        quiet (bool): Suppresses progress output when True.
-        metadata (bool): Whether to embed metadata into the output file.
-        keep (bool): Whether to keep intermediate files.
-        only_video (bool): Download video only (no audio).
-        cookies (str | None): Path to a cookies file, or None.
-        remote (str): Name of the remote storage target (if used).
-        subtitles (bool): Whether subtitles should be downloaded.
-        subtitle_langs (str): Comma-separated subtitle language codes.
-        embed_subs (bool): Whether to embed subtitles into the container.
-        auto_subs (bool): Whether to include auto-generated subtitles.
-        ytdlp_args (dict[str, Any] | None): Extra raw yt-dlp options.
-
-    Example:
-        >>> params = DownloadParams(url="https://youtu.be/...", codec="mp3", ...)
-        >>> async with Download(params) as dl:
-        ...     async for result in dl:
-        ...         print(result)
-        ...     # or
-        ...     await dl.download_all()
+        params (DownloadParams): Download parameters
     """
 
     def __init__(self, params: DownloadParams):
         self.params = params
-        self.config = DownloadConfig(params)
 
-        conf = self.config.apply_config()
+        self.conf = DownloadConfig(params)
+        self.conf.save_config()
 
-        self.codec = conf["codec"]
-        self.kbps = conf["kbps"]
-        self.quality = conf["quality"]
-        self.jobs = conf["jobs"]
-        self.quiet = conf["quiet"]
-        self.metadata = conf["metadata"]
-        self.keep = conf["keep"]
-        self.only_video = conf["only_video"]
-        self.cookies = conf["cookies"]
-        self.remote = conf["remote"]
-        self.subtitles = conf["subtitles"]
-        self.subtitle_langs = conf["subtitle_langs"]
-        self.embed_subs = conf["embed_subs"]
-        self.auto_subs = conf["auto_subs"]
-        self.ytdlp_args = conf["ytdlp_args"]
-
-        if not self.config.save_config():
-            return
-
-        self._executor = self._get_executor()
-        self._url_list = URLParser(params.url, params.quiet).parse()
+        self.c = self.conf.apply_config()
+        self._url_list = URLParser(params.url, self.c["quiet"]).parse()
 
         set_colors(params.color)
 
@@ -105,23 +57,23 @@ class Download:
     def _get_executor(self):
         from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
-        if self.only_video or self.codec in VIDEO_CONTAINERS:
-            return ProcessPoolExecutor(max_workers=self.jobs)
+        if self.c["only_video"] or self.c["codec"] in VIDEO_CONTAINERS:
+            return ProcessPoolExecutor(max_workers=self.c["jobs"])
         else:
-            return ThreadPoolExecutor(max_workers=self.jobs)
+            return ThreadPoolExecutor(max_workers=self.c["jobs"])
 
     async def __aenter__(self):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        self._executor.shutdown(wait=True, cancel_futures=False)
+        self._get_executor().shutdown(wait=True, cancel_futures=False)
         return False
 
     def __aiter__(self):
         return self._aiter()
 
     async def _aiter(self):
-        sem = asyncio.Semaphore(self.jobs)
+        sem = asyncio.Semaphore(self.c["jobs"])
 
         async def download_one(url: str):
             async with sem:
@@ -140,17 +92,17 @@ class Download:
                 echo(result)
 
     async def _download_url(self, url: str) -> str | None:
-        if self.codec == "wav" and self.metadata:
+        if self.c["codec"] == "wav" and self.c["metadata"]:
             self.metadata = False
-            if not self.quiet:
+            if not self.c["quiet"]:
                 echo(info("WAV format doesn't support metadata embedding"))
 
-        if not self.quiet:
+        if not self.c["quiet"]:
             echo("\n" + styled("Starting: ", BOLD_YELLOW) + url)
 
         await asyncio.to_thread(self._sync_download, url)
 
-        return f"\n{success(url)}\n" if not self.quiet else None
+        return f"\n{success(url)}\n" if not self.c["quiet"] else None
 
     def _get_ytdlp(self):
         if self._YoutubeDL is None:
@@ -160,8 +112,10 @@ class Download:
         return self._YoutubeDL
 
     def _sync_download(self, url: str) -> None:
-        """Synchronous download using yt-dlp (runs in thread pool)."""
-        options = OptionsBuilder(self.params).build()
+        options = OptionsBuilder(
+            self.params,
+            self.conf,
+        ).build()
 
         YoutubeDL = self._get_ytdlp()
         with YoutubeDL(options) as ydl:

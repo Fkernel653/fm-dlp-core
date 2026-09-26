@@ -23,6 +23,8 @@ class DownloadParams:
         save: Persist configuration for future use if True.
         use_config: Load settings from config file if True.
         path: Output directory path.
+        ffmpeg_path: The way binary file FFmpeg
+        config_file: Custom path to the TOML config file. If None, the platform-specific default is used.
         only_video: Download video only (skip audio extraction) if True.
         cookies: Path to Netscape-format cookies file (optional).
         remote: Remote destination path for uploads (optional).
@@ -44,7 +46,9 @@ class DownloadParams:
     keep: bool
     save: bool
     use_config: bool
-    path: str
+    path: str | None
+    ffmpeg_path: str | None
+    config_file: str | None
     only_video: bool
     cookies: str | None
     remote: str | None
