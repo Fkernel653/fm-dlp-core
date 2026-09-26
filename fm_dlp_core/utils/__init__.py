@@ -43,16 +43,12 @@ VIDEO_CONTAINER_AUDIO_MAP = {
 
 
 def echo(text: str, file: TextIO = sys.stdout) -> None:
-    """
-    Print a message to the specified output stream with a newline.
-    """
+    """Print a message to the specified output stream with a newline."""
     file.write(text + "\n")
 
 
 def echo_error(text: str, exit: bool = True) -> None:
-    """
-    Print an error message to stderr and terminate execution.
-    """
+    """Print an error message to stderr and terminate execution."""
     echo(error(text), file=sys.stderr)
     if exit:
         sys.exit(1)
