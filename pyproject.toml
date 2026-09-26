@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.12.19"]
+build-backend = "uv_build"
 
 [project]
 name = "fm-dlp-core"
-version = "0.3.3"
+version = "0.3.4"
 description = "Core package for YouTube audio/video downloading and searching."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -26,7 +26,6 @@ keywords = [
     "agplv3",
 ]
 classifiers = [
-    "License :: OSI Approved :: GNU Affero General Public License v3",
     "Intended Audience :: End Users/Desktop",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
@@ -57,5 +56,5 @@ Homepage = "https://github.com/Fkernel653/fm-dlp"
 Repository = "https://github.com/Fkernel653/fm-dlp.git"
 Documentation = "https://github.com/Fkernel653/fm-dlp#readme"
 
-[tool.hatch.build.targets.wheel]
-packages = ["fm_dlp_core"]
+[tool.uv.build-backend]
+module-root = ""
