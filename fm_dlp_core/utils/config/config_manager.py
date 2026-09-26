@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import Any
 
-from ...utils import echo_error, set_colors
+from ...utils import echo, echo_error, info, set_colors, success
+from .params import ConfigParams
 
 
 def get_config_dir(dir_name: str = "fm-dlp") -> str:
@@ -30,65 +31,75 @@ class ConfigManager:
     """
     Manage application configuration stored in a TOML file.
 
-    This class is responsible for loading and updating the configuration
-    file located in the platform-specific user configuration directory.
-
     Attributes:
-        color (bool): Whether colored output is enabled for messages.
-
-    Example:
-        >>> manager = ConfigManager(color=True)
-        >>> config = manager.load_config()
-        >>> config["path"] = "/downloads"
-        >>> manager.update_config(config)
-        True
+        params (ConfigParams): Configuration parameters (quiet, color, config_file).
+        config_file (Path): Resolved path to the TOML config file. Falls back
+            to the platform-specific default when ``params.config_file`` is
+            missing or not a ``.toml`` file.
     """
 
-    def __init__(self, color: bool = True):
-        self.color = color
+    def __init__(self, params: ConfigParams):
+        self.params = params
         self.encoding = "utf-8"
-        set_colors(color)
+        if params.config_file is None or not params.config_file.endswith(".toml"):
+            if params.config_file is not None:
+                self._if_quiet(
+                    params.quiet,
+                    "The configuration file must be TOML format. Using default.",
+                    error_result=True,
+                    exit_on_error=False,
+                )
+            self.config_file = CONFIG_FILE
+        else:
+            self.config_file = Path(params.config_file).expanduser()
+        set_colors(params.color)
 
     def load_config(self) -> dict[str, Any]:
-        """
-        Load configuration from the TOML file.
-
-        Args:
-            color (bool): Enable colored output for error messages when the config
-                          file is corrupted.
-
-        Returns:
-            dict: Parsed configuration dictionary, or empty dict if the file doesn't
-                  exist or is corrupted.
-        """
+        """Load and parse the TOML config. Returns {} if missing/corrupted."""
         import tomllib
 
-        if not CONFIG_FILE.exists():
+        if not self.config_file.exists():
             return {}
         try:
-            content = CONFIG_FILE.read_text(self.encoding)
+            content = self.config_file.read_text(self.encoding)
             return tomllib.loads(content)
         except (tomllib.TOMLDecodeError, OSError):
-            echo_error("Config file is corrupted. Creating new one...", exit=False)
+            self._if_quiet(
+                self.params.quiet,
+                "Config file is corrupted. Creating new one...",
+                error_result=True,
+                exit_on_error=False,
+            )
             return {}
 
     def update_config(self, data: dict[str, Any]) -> bool:
-        """
-        Update configuration data to the TOML file, creating directories if needed.
-
-        Args:
-            data (dict): Dictionary containing the complete configuration data to write.
-
-        Returns:
-            bool: True if the configuration was updated successfully, False if an error occurred.
-        """
+        """Write ``data`` to the config file. Returns True on success."""
         try:
-            CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+            self.config_file.parent.mkdir(parents=True, exist_ok=True)
             toml_content = TOMLSerializer.dumps(data)
-            CONFIG_FILE.write_text(toml_content, self.encoding)
+            self.config_file.write_text(toml_content, self.encoding)
             return True
         except (PermissionError, OSError):
             return False
+
+    def _if_quiet(
+        self,
+        quiet: bool,
+        text: str,
+        error_result: bool | None = None,
+        exit_on_error: bool = True,
+        success_result: bool | None = None,
+        info_result: bool | None = None,
+    ) -> None:
+        if not quiet:
+            if error_result:
+                echo_error(text, exit=exit_on_error)
+            elif success_result:
+                echo(success(text))
+            elif info_result:
+                echo(info(text))
+            else:
+                echo(text)
 
 
 class TOMLSerializer:
