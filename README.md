@@ -576,7 +576,6 @@ asyncio.run(
 ```
 
 </details>
-```
 
 ---
 
@@ -648,7 +647,6 @@ Examples of formatting search results from different sources. Click each example
 ```
 
 </details>
-```
 
 ### Format Elements
 
