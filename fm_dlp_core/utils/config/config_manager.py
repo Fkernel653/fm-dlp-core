@@ -5,7 +5,7 @@ from ...utils import echo, echo_error, info, set_colors, success
 from .params import ConfigParams
 
 
-def get_config_dir(dir_name: str = "fm-dlp") -> str:
+def get_config_dir(dir_name: str = "fm-dlp") -> Path:
     """Get the user configuration directory path based on the operating system."""
     import os
     import sys
@@ -21,10 +21,10 @@ def get_config_dir(dir_name: str = "fm-dlp") -> str:
         xdg = os.environ.get("XDG_CONFIG_HOME")
         d = Path(xdg) if xdg else (home / ".config")
 
-    return str(d / dir_name)
+    return d / dir_name
 
 
-CONFIG_FILE = Path(get_config_dir()) / "config.toml"
+CONFIG_FILE = get_config_dir() / "config.toml"
 
 
 class ConfigManager:
