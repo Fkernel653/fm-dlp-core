@@ -10,21 +10,43 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Quick Start](#-quick-start)
-- [Installation](#-installation)
-- [Requirements](#-requirements)
-- [Core Concepts](#-core-concepts)
-- [Downloading Content](#-downloading-content)
-- [Searching Content](#-searching-content)
-- [Configuration](#-configuration)
-- [API Reference](#-api-reference)
-- [License & Acknowledgments](#-license--acknowledgments)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Requirements](#requirements)
+- [Core Concepts](#core-concepts)
+  - [Async-First Design](#async-first-design)
+  - [Configuration Persistence](#configuration-persistence)
+  - [Provider Pattern](#provider-pattern)
+  - [Layered yt-dlp Options](#layered-yt-dlp-options)
+- [Downloading Content](#downloading-content)
+  - [Overview](#overview)
+  - [DownloadParams Class](#downloadparams-class)
+  - [Download Parameters Reference](#download-parameters-reference)
+  - [Supported Codecs](#supported-codecs)
+  - [Executor Selection](#executor-selection)
+- [Searching Content](#searching-content)
+  - [Overview](#overview-1)
+  - [Search Parameters](#search-parameters)
+  - [Output Modes](#output-modes)
+- [Configuration](#configuration)
+  - [Config file location](#config-file-location)
+  - [Custom config file](#custom-config-file)
+  - [Usage](#usage)
+  - [Low-level API](#low-level-api)
+- [API Reference](#api-reference)
+  - [Core Package](#core-package)
+  - [Key Classes](#key-classes)
+  - [Key Functions](#key-functions)
+- [Download Output Examples](#download-output-examples)
+- [Search Output Examples](#search-output-examples)
+  - [Format Elements](#format-elements)
+- [License & Acknowledgments](#license--acknowledgments)
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```python
 import asyncio
@@ -68,7 +90,7 @@ asyncio.run(
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
 pip install fm-dlp-core
@@ -84,7 +106,7 @@ pip install -e .
 
 ---
 
-## ⚙️ Requirements
+## Requirements
 
 - **Python 3.11+** - TOML support required
 - **FFmpeg** - Required for audio/video processing and subtitle embedding. Install via:
@@ -99,7 +121,7 @@ pip install -e .
 
 ---
 
-## 🧠 Core Concepts
+## Core Concepts
 
 ### Async-First Design
 
@@ -125,7 +147,7 @@ The `OptionsBuilder` assembles options in priority order:
 
 ---
 
-## 🎵 Downloading Content
+## Downloading Content
 
 ### Overview
 
@@ -224,7 +246,7 @@ This optimization is handled automatically based on the `only_video` flag and `c
 
 ---
 
-## 🔍 Searching Content
+## Searching Content
 
 ### Overview
 
@@ -257,7 +279,7 @@ The search system supports:
 | **Raw Data**  | `raw=True`                  | Python dictionaries with full metadata |
 
 <details>
-<summary><b>📖 Click for examples</b></summary>
+<summary><b>Click for examples</b></summary>
 
 **YouTube Music Search (Tracks)**
 
@@ -280,7 +302,7 @@ for result in Search(
 
 ```python
 for result in Search(
-    query="Python tutorial",
+    query="Psychology",
     limit=5,
     yt_video=True,  # Use YouTube (videos)
     album=False,
@@ -337,7 +359,7 @@ if urls:
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 Download settings can be persisted to a TOML file and reused across sessions. This covers codec, bitrate, quality, jobs, metadata/keep flags, cookies, remote, subtitles, raw yt-dlp args, FFmpeg path, and the default download directory.
 
@@ -446,7 +468,7 @@ manager.update_config(config)
 
 ---
 
-## 📚 API Reference
+## API Reference
 
 ### Core Package
 
@@ -492,17 +514,140 @@ manager.update_config(config)
 
 ---
 
-## 🛠️ Output Formatting
+## Download Output Examples
 
-### Search Results Format
+<details>
+<summary>Example Output</summary>
+
+```text
+
+Starting: https://music.youtube.com/watch?v=DVDiOMoW0wU
+[youtube] Extracting URL: https://music.youtube.com/watch?v=DVDiOMoW0wU
+[youtube] DVDiOMoW0wU: Downloading webpage
+[youtube] DVDiOMoW0wU: Downloading visionos player API JSON
+[youtube] DVDiOMoW0wU: Downloading m3u8 information
+[info] DVDiOMoW0wU: Downloading 1 format(s): 251
+[info] There are no subtitles for the requested languages
+[info] Downloading video thumbnail 41 ...
+[info] Writing video thumbnail 41 to: /home/kernel/Music/A Dream.webp
+[download] Destination: /home/kernel/Music/A Dream.webm
+[download] 100% of 2.55MiB in 00:00:00 at 2.73MiB/s
+[ExtractAudio] Destination: /home/kernel/Music/A Dream.opus
+Deleting original file /home/kernel/Music/A Dream.webm (pass -k to keep)
+[Metadata] Adding metadata to "/home/kernel/Music/A Dream.opus"
+[ThumbnailsConvertor] Converting thumbnail "/home/kernel/Music/A Dream.webp" to png
+[EmbedThumbnail] mutagen: Adding thumbnail to "/home/kernel/Music/A Dream.opus"
+
+Success: https://music.youtube.com/watch?v=DVDiOMoW0wU
 
 ```
-    1. Mr. Kill Myself
-        ├─ Sewerslvt
-        ├─ Draining Love Story
-        ├─ 13,456,789 │ 7:52
-        └─ https://music.youtube.com/watch?v=y55fzyXZDSE
+
+And the corresponding Python call:
+
+```python
+asyncio.run(
+    run_downloader(
+        DownloadParams(
+            url="https://music.youtube.com/watch?v=DVDiOMoW0wU",
+            codec="opus",
+            kbps=256,
+            quality="best",
+            jobs=1,
+            quiet=False,
+            metadata=True,
+            keep=False,
+            save=False,
+            use_config=False,
+            path="/home/kernel/Music",
+            ffmpeg_path=None,
+            config_file=None,
+            only_video=False,
+            cookies=None,
+            remote=None,
+            subtitles=False,
+            subtitle_langs=None,
+            embed_subs=False,
+            auto_subs=False,
+            color=False,
+            ytdlp_args=None,
+        )
+    )
+)
+```
+
+</details>
+```
+
+---
+
+## Search Output Examples
+
+Examples of formatting search results from different sources. Click each example to expand.
+
+<details>
+<summary>YTMusic (Track)</summary>
+
+```
+
+    1. A Dream
+        ├─ Flatsound
+        ├─ Somewhere in the Distance, Somewhere Toward the Mountains
+        ├─ 4M │ 2:51
+        └─ https://music.youtube.com/watch?v=DVDiOMoW0wU
+          ──────────────────────────────────────────────────
+
+    N. Title
+        ├─ Artist
+        ├─ Album
+        ├─ Views │ Duration
+        └─ URL
            ──────────────────────────────────────────────────
+
+```
+
+</details>
+
+<details>
+<summary>YTMusic (Album)</summary>
+
+```
+
+    1. Skitzofrenia Simulation
+        ├─ Sewerslvt
+        ├─ 2021
+        └─ https://music.youtube.com/playlist?list=OLAK5uy_kXLBb5YlVizbrgXAHwTgarL5HYC3usuYA
+          ──────────────────────────────────────────────────
+
+    N. Title
+        ├─ Artist
+        ├─ Year
+        └─ URL
+           ──────────────────────────────────────────────────
+
+```
+
+</details>
+
+<details>
+<summary>YouTube (Video)</summary>
+
+```
+
+    1. Silence , I'm Dying.
+        ├─ Willix
+        ├─ 587,740 │ 2:05
+        └─ https://youtu.be/oSOaz5yaBM8
+          ──────────────────────────────────────────────────
+
+    N. Title
+        ├─ Artist
+        ├─ Views │ Duration
+        └─ URL
+           ──────────────────────────────────────────────────
+
+```
+
+</details>
 ```
 
 ### Format Elements
@@ -519,9 +664,9 @@ manager.update_config(config)
 
 ---
 
-## 📄 License & Acknowledgments
+## License & Acknowledgments
 
-AGPLv3 License — Built with:
+[AGPLv3 License](LICENSE) — Built with:
 
 | Library                                             | Purpose                                |
 | --------------------------------------------------- | -------------------------------------- |
