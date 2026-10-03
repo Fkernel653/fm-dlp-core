@@ -1,0 +1,60 @@
+[build-system]
+requires = ["uv_build>=0.12.22"]
+build-backend = "uv_build"
+
+[project]
+name = "fm-dlp-core"
+version = "0.3.6.1"
+description = "Powerful Python library for searching and downloading content from YouTube, YouTube Music, and over 1000+ supported sites. Built on top of yt-dlp, it provides a clean, async-first API with rich features including concurrent downloads, metadata embedding, subtitle download/embedding, arbitrary yt-dlp args passthrough, and flexible output formatting."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "AGPL-3.0-only"
+authors = [
+    {name = "Fkernel653"}
+]
+keywords = [
+    "framework",
+    "library",
+    "libraries",
+    "lib",
+    "youtube",
+    "ytmusicapi",
+    "youtube-music",
+    "yt-dlp",
+    "yt-dlp-wrapper",
+    "ffmpeg",
+    "agplv3",
+]
+classifiers = [
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Internet :: WWW/HTTP",
+]
+
+dependencies = [
+    "yt-dlp",
+    "ytmusicapi",
+    "mutagen",
+]
+
+[project.optional-dependencies]
+dev = ["ruff", "uv"]
+
+[project.urls]
+Homepage = "https://github.com/Fkernel653/fm-dlp-core"
+Repository = "https://github.com/Fkernel653/fm-dlp-core.git"
+Documentation = "https://github.com/Fkernel653/fm-dlp-core#readme"
+
+[tool.uv.build-backend]
+module-root = ""
