@@ -1,8 +1,6 @@
 from typing import Any
 
-from fm_dlp_core.utils.config.params import ConfigParams
-
-from ...utils.config.parametrs import ParametersManager
+from ...utils.config import ConfigParams, ParametersManager
 from .params import DownloadParams
 
 

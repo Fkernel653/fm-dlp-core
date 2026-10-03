@@ -1,14 +1,12 @@
 from pathlib import Path
 from typing import Any
 
-from fm_dlp_core.utils.config.params import ConfigParams
-
 from ...utils import (
     AUDIO_CODECS,
     VIDEO_CONTAINER_AUDIO_MAP,
     VIDEO_CONTAINERS,
 )
-from ...utils.config.path import PathManager
+from ...utils.config import ConfigParams, PathManager
 from .config import DownloadConfig
 from .params import DownloadParams
 
