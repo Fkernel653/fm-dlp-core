@@ -108,8 +108,8 @@ pip install -e .
 
 ## Requirements
 
-- **Python 3.11+** - TOML support required
-- **FFmpeg** - Required for audio/video processing and subtitle embedding. Install via:
+- **Python 3.11+** - tomllib support
+- **FFmpeg** - Requires for audio/video processing. Install via:
   - **macOS:** `brew install ffmpeg`
   - **Linux:**
     - **Debian:** `sudo apt install ffmpeg`

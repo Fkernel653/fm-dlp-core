@@ -1,12 +1,13 @@
 [build-system]
-requires = ["uv_build>=0.12.0"]
+requires = ["uv_build"]
 build-backend = "uv_build"
 
 [project]
 name = "fm-dlp-core"
-version = "0.3.8.2"
-description = "Async Python wrapper over yt-dlp for searching and downloading from YouTube, YTMusic, and 1000+ sites."
+version = "0.3.8.3"
+description = "Async Python wrapper over yt-dlp for searching and downloading from YouTube, YTMusic, and 1000+ sites"
 readme = "README.md"
+requires-python = ">=3.11"
 license = "AGPL-3.0-only"
 authors = [
     {name = "Fkernel653"}
