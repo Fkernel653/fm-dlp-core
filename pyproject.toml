@@ -1,13 +1,12 @@
 [build-system]
-requires = ["uv_build>=0.12.24"]
+requires = ["uv_build>=0.12.0"]
 build-backend = "uv_build"
 
 [project]
 name = "fm-dlp-core"
-version = "0.3.8.1"
-description = "Powerful Python library for searching and downloading content from YouTube, YouTube Music, and over 1000+ supported sites. Built on top of yt-dlp, it provides a clean, async-first API with rich features including concurrent downloads, metadata embedding, subtitle download/embedding, arbitrary yt-dlp args passthrough, and flexible output formatting."
+version = "0.3.8.2"
+description = "Async Python wrapper over yt-dlp for searching and downloading from YouTube, YTMusic, and 1000+ sites."
 readme = "README.md"
-requires-python = ">=3.11"
 license = "AGPL-3.0-only"
 authors = [
     {name = "Fkernel653"}

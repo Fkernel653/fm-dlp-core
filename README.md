@@ -1,4 +1,4 @@
-# fm-dlp-core — Core Library for YouTube & 1000+ Sites
+# fm-dlp-core — Async Python wrapper over yt-dlp
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=fff&style=for-the-badge)](https://python.org)
 [![PyPI](https://img.shields.io/pypi/v/fm-dlp-core?style=for-the-badge&logo=pypi&logoColor=fff&label=PyPI&color=007ec6)](https://pypi.org/project/fm-dlp-core)
@@ -6,7 +6,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-9cf?style=for-the-badge)](<>)
 [![Ruff](https://img.shields.io/badge/Code%20Style-Ruff-ff69b4?logo=ruff&logoColor=fff&style=for-the-badge)](https://docs.astral.sh/ruff)
 
-**fm-dlp-core** is a powerful Python library for searching and downloading content from YouTube, YouTube Music, and over 1000+ supported sites. Built on top of yt-dlp, it provides a clean, async-first API with rich features including concurrent downloads, metadata embedding, subtitle download/embedding, arbitrary yt-dlp args passthrough, and flexible output formatting.
+**fm-dlp-core** is an async Python wrapper over [yt-dlp](https://github.com/yt-dlp/yt-dlp) for searching and downloading from YouTube, YTMusic, and [1000+ sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md).
 
 ---
 
@@ -54,14 +54,14 @@ from fm_dlp_core import Search, run_downloader
 from fm_dlp_core.commands.downloader import DownloadParams
 
 # 1. Search for a track
-for result in Search("Sewerslvt", limit=3, yt_video=False, album=False).search():
+for result in Search("query", limit=3, yt_video=False, album=False).search():
     print(result)
 
 # 2. Download a track
 asyncio.run(
     run_downloader(
         DownloadParams(
-            url="https://music.youtube.com/watch?v=y55fzyXZDSE",
+            url="URL",
             codec="mp3",
             kbps=320,
             quality="best",
@@ -79,7 +79,7 @@ asyncio.run(
             remote=None,
             color=True,
             subtitles=False,
-            subtitle_langs="en",
+            subtitle_langs=None,
             embed_subs=False,
             auto_subs=False,
             ytdlp_args=None,
@@ -115,7 +115,7 @@ pip install -e .
     - **Debian:** `sudo apt install ffmpeg`
     - **Fedora:** `sudo dnf install ffmpeg`
     - **Arch Linux:** `sudo pacman -S ffmpeg`
-  - **Windows:** Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH
+  - **Windows:** Download from [ffmpeg.org](https://ffmpeg.org/download.html#build-windows) and add to PATH
 
   If FFmpeg is not on `PATH`, pass `ffmpeg_path` to `DownloadParams`.
 
@@ -290,7 +290,7 @@ for result in Search(
     query="Sewerslvt",
     limit=5,
     yt_video=False,  # Use YouTube Music
-    album=False,     # Search for tracks
+    album=False,  # Search for tracks
     color=True,
 ).search():
     print(result)
@@ -320,10 +320,10 @@ from fm_dlp_core import Search, run_downloader
 from fm_dlp_core.commands.downloader import DownloadParams
 
 # Get only URLs
-urls = list(Search("breakcore", limit=10, only_url=True).search())
+urls = list(Search("Ambient", limit=10, only_url=True).search())
 
 # Chain search → download
-urls = list(Search("chill beats", limit=5, only_url=True).search())
+urls = list(Search("Synthwave", limit=5, only_url=True).search())
 if urls:
     asyncio.run(
         run_downloader(
@@ -403,14 +403,28 @@ from fm_dlp_core.commands.downloader import DownloadParams
 asyncio.run(
     run_downloader(
         DownloadParams(
-            url="https://youtube.com/watch?v=...",
-            codec="flac", kbps=0, quality="best", jobs=4,
-            quiet=False, metadata=True, keep=False,
-            save=True, use_config=False,
-            path="./music", ffmpeg_path=None, config_file=None,
-            only_video=False, cookies=None, remote=None, color=True,
-            subtitles=True, subtitle_langs="en,ru",
-            embed_subs=True, auto_subs=False, ytdlp_args=None,
+            url="URL",
+            codec="flac",
+            kbps=0,
+            quality="best",
+            jobs=4,
+            quiet=False,
+            metadata=True,
+            keep=False,
+            save=True,
+            use_config=False,
+            path="./music",
+            ffmpeg_path=None,
+            config_file=None,
+            only_video=False,
+            cookies=None,
+            remote=None,
+            color=True,
+            subtitles=True,
+            subtitle_langs="en,ru",
+            embed_subs=True,
+            auto_subs=False,
+            ytdlp_args=None,
         )
     )
 )
@@ -419,15 +433,29 @@ asyncio.run(
 asyncio.run(
     run_downloader(
         DownloadParams(
-            url="https://youtube.com/watch?v=...",
+            url="URL",
             # any values here are overridden by the saved config
-            codec="mp3", kbps=0, quality="best", jobs=1,
-            quiet=False, metadata=True, keep=False,
-            save=False, use_config=True,
-            path="./downloads", ffmpeg_path=None, config_file=None,
-            only_video=False, cookies=None, remote=None, color=True,
-            subtitles=False, subtitle_langs=None,
-            embed_subs=False, auto_subs=False, ytdlp_args=None,
+            codec="mp3",
+            kbps=0,
+            quality="best",
+            jobs=1,
+            quiet=False,
+            metadata=True,
+            keep=False,
+            save=False,
+            use_config=True,
+            path="./downloads",
+            ffmpeg_path=None,
+            config_file=None,
+            only_video=False,
+            cookies=None,
+            remote=None,
+            color=True,
+            subtitles=False,
+            subtitle_langs=None,
+            embed_subs=False,
+            auto_subs=False,
+            ytdlp_args=None,
         )
     )
 )
@@ -506,11 +534,11 @@ manager.update_config(config)
 
 ### Key Functions
 
-| Function                  | Module                | Description                |
-| ------------------------- | --------------------- | -------------------------- |
-| `run_downloader`          | `commands.downloader` | Async download entry point |
-| `echo`                    | `utils`               | Print with color support   |
-| `success/error/info/hint` | `utils.colors`        | Formatted colored messages |
+| Function                  | Module                           | Description                |
+| ------------------------- | -------------------------------- | -------------------------- |
+| `run_downloader`          | `commands.downloader.downloader` | Async download entry point |
+| `echo`                    | `utils`                          | Print with color support   |
+| `success/error/info/hint` | `utils.colors`                   | Formatted colored messages |
 
 ---
 
