@@ -1,5 +1,5 @@
 """
-fm-dlp-core — Core package for YouTube audio/video downloading and searching.
+fm-dlp-core — Async Python wrapper over yt-dlp.
 
 This package provides the foundational functionality for the fm-dlp CLI application,
 handling all core operations including search, download, and configuration management.
@@ -24,6 +24,7 @@ Package Structure:
         config/       - Configuration management for paths and parameters
 
 Exported Symbols:
+    ConfigManager, ConfigParams, PathManager, PathManager - Config functionality
     Download, DownloadParams, run_downloader   - Async download functionality
     Search, search             - Search capabilities
     ALL_CODECS                 - Complete list of supported codecs/formats
@@ -34,6 +35,7 @@ Exported Symbols:
 
 Requirements:
     - Python 3.11+ with tomllib support
+    - Platform-agnostic (Windows, macOS, Linux)
     - ffmpeg for audio/video processing (required for conversion)
 
 For more information, visit: https://github.com/Fkernel653/fm-dlp-core
@@ -48,14 +50,19 @@ from .utils import (
     VIDEO_CONTAINERS,
     echo,
 )
+from .utils.config import ConfigManager, ConfigParams, ParametersManager, PathManager
 
 __all__ = [
     "ALL_CODECS",
     "AUDIO_CODECS",
     "VIDEO_CONTAINERS",
     "VIDEO_CONTAINER_AUDIO_MAP",
+    "ConfigManager",
+    "ConfigParams",
     "Download",
     "DownloadParams",
+    "ParametersManager",
+    "PathManager",
     "Search",
     "echo",
     "run_downloader",
