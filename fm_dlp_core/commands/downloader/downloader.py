@@ -48,7 +48,11 @@ class Download:
         self.conf.save_config()
 
         self.c = self.conf.apply_config()
-        self._url_list = URLParser(params.url, self.c["quiet"]).parse()
+        self.codec = self.c["codec"]
+        self.jobs = self.c["jobs"]
+        self.quiet = self.c["quiet"]
+
+        self._url_list = URLParser(params.url, self.quiet).parse()
 
         set_colors(params.color)
 
@@ -57,10 +61,10 @@ class Download:
     def _get_executor(self):
         from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
-        if self.c["only_video"] or self.c["codec"] in VIDEO_CONTAINERS:
-            return ProcessPoolExecutor(max_workers=self.c["jobs"])
+        if self.c["only_video"] or self.codec in VIDEO_CONTAINERS:
+            return ProcessPoolExecutor(max_workers=self.jobs)
         else:
-            return ThreadPoolExecutor(max_workers=self.c["jobs"])
+            return ThreadPoolExecutor(max_workers=self.jobs)
 
     async def __aenter__(self):
         return self
@@ -73,10 +77,10 @@ class Download:
         return self._aiter()
 
     async def _aiter(self):
-        sem = asyncio.Semaphore(self.c["jobs"])
+        s = asyncio.Semaphore(self.jobs)
 
         async def download_one(url: str):
-            async with sem:
+            async with s:
                 return await self._download_url(url)
 
         tasks = [asyncio.create_task(download_one(u)) for u in self._url_list]
@@ -92,17 +96,17 @@ class Download:
                 echo(result)
 
     async def _download_url(self, url: str) -> str | None:
-        if self.c["codec"] == "wav" and self.c["metadata"]:
+        if self.codec == "wav" and self.c["metadata"]:
             self.metadata = False
-            if not self.c["quiet"]:
+            if not self.quiet:
                 echo(info("WAV format doesn't support metadata embedding"))
 
-        if not self.c["quiet"]:
+        if not self.quiet:
             echo("\n" + styled("Starting: ", BOLD_YELLOW) + url)
 
         await asyncio.to_thread(self._sync_download, url)
 
-        return f"\n{success(url)}\n" if not self.c["quiet"] else None
+        return f"\n{success(url)}\n" if not self.quiet else None
 
     def _get_ytdlp(self):
         if self._YoutubeDL is None:
@@ -119,7 +123,7 @@ class Download:
 
         YoutubeDL = self._get_ytdlp()
         with YoutubeDL(options) as ydl:
-            _ = ydl.download([url])
+            ydl.download([url])
 
 
 async def run_downloader(params: DownloadParams) -> None:
