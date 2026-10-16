@@ -15,6 +15,8 @@ class ResultFormatter:
             "white": "\033[0;37m" if color else "",
             "reset": RESET if color else "",
         }
+        self.bold_red = self._c["bold_red"]
+        self.reset = self._c["reset"]
 
     @staticmethod
     def fmt_views(v: str | int | None) -> str:
@@ -131,7 +133,7 @@ class ResultFormatter:
         tree = f"    {g}├─"
         corner = f"    {g}└─"
         sep = f" {g}│{w} "
-        div = f"       {g}{'─' * 50}{c['reset']}\n"
+        div = f"       {g}{'─' * 50}{self.reset}\n"
 
         lines = [f"\n{c['bold_cyan']}{num}. {c['bold_white']}{title}"]
 
@@ -159,7 +161,7 @@ class ResultFormatter:
             year = str(kwargs.get("year", "N/A"))
             lines.extend([f"{tree} {w + artist}", f"{tree} {w + year}"])
         if url:
-            lines.append(f"{corner} {c['bold_red']}{url}")
+            lines.append(f"{corner} {self.bold_red}{url}")
         lines.append(div)
 
         return "\n".join(lines)
@@ -178,4 +180,4 @@ class ResultFormatter:
         Returns:
             str: A formatted error string with color codes if enabled.
         """
-        return self._c["bold_red"] + "Search Error: " + self._c["reset"] + error
+        return self.bold_red + "Search Error: " + self.reset + error

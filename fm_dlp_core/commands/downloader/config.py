@@ -1,6 +1,11 @@
 from typing import Any
 
+<<<<<<< HEAD
 from ...utils.config import ConfigParams, ParametersManager
+=======
+from ...utils.config.parametrs import ParametersManager
+from ...utils.config.params import ConfigParams
+>>>>>>> 17e0b89 (Refactored)
 from .params import DownloadParams
 
 
