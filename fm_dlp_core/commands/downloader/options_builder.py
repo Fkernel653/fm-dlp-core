@@ -6,10 +6,6 @@ from ...utils import (
     VIDEO_CONTAINER_AUDIO_MAP,
     VIDEO_CONTAINERS,
 )
-<<<<<<< HEAD
-from ...utils.config import ConfigParams, PathManager
-=======
->>>>>>> 17e0b89 (Refactored)
 from .config import DownloadConfig
 from .params import DownloadParams
 
