@@ -1,14 +1,11 @@
 from pathlib import Path
 from typing import Any
 
-from fm_dlp_core.utils.config.params import ConfigParams
-
 from ...utils import (
     AUDIO_CODECS,
     VIDEO_CONTAINER_AUDIO_MAP,
     VIDEO_CONTAINERS,
 )
-from ...utils.config.path import PathManager
 from .config import DownloadConfig
 from .params import DownloadParams
 
@@ -24,24 +21,23 @@ class OptionsBuilder:
         self.params = params
         self.config = config
 
-        config_params = ConfigParams(True, params.color, params.config_file)
-
-        self.path = Path(PathManager(params=config_params).get_path())
         self.conf = self.config.apply_config()
 
+        self.codec = self.conf["codec"]
+
     def _parse_quality(self) -> str:
-        quality = self.conf["quality"]
+        q = self.conf["quality"]
 
-        if quality == "best":
+        if q == "best":
             return "bestvideo"
-        elif quality == "worst":
+        elif q == "worst":
             return "worstvideo"
-        elif quality.isdigit():
-            return f"bestvideo[height<={quality}]"
-        elif quality.endswith("p") and quality[:-1].isdigit():
-            return f"bestvideo[height<={quality[:-1]}]"
+        elif q.isdigit():
+            return f"bestvideo[height<={q}]"
+        elif q.endswith("p") and q[:-1].isdigit():
+            return f"bestvideo[height<={q[:-1]}]"
 
-        return quality
+        return q
 
     def build(self) -> dict[str, Any]:
         """
@@ -51,12 +47,20 @@ class OptionsBuilder:
         defaults, config-file overrides, and CLI values are already merged
         before this method is called.
         """
+        from ...utils.config.params import ConfigParams
+        from ...utils.config.path import PathManager
+
+        config_params = ConfigParams(True, self.params.color, self.params.config_file)
+        path = Path(PathManager(params=config_params).get_path())
+
+        quiet, jobs = self.conf["quiet"], self.conf["jobs"]
+
         base_opts: dict[str, Any] = {
-            "quiet": self.conf["quiet"],
-            "no_warnings": self.conf["quiet"],
-            "outtmpl": str(self.path / "%(title)s.%(ext)s"),
-            "concurrent_downloads": self.conf["jobs"],
-            "concurrent_fragment_downloads": self.conf["jobs"],
+            "quiet": quiet,
+            "no_warnings": quiet,
+            "outtmpl": str(path / "%(title)s.%(ext)s"),
+            "concurrent_downloads": jobs,
+            "concurrent_fragment_downloads": jobs,
             "extractor_retries": 3,
             "postprocessors": [],
             "keepvideo": self.conf["keep"],
@@ -96,7 +100,7 @@ class OptionsBuilder:
             opts["cookiesfrombrowser"] = (cookies,)
 
     def _add_subtitles(self, opts: dict[str, Any]) -> None:
-        if self.conf["subtitles"]:
+        if not self.conf["subtitles"]:
             return
         opts["writesubtitles"] = True
         opts["subtitleslangs"] = [
@@ -105,9 +109,7 @@ class OptionsBuilder:
         opts["writeautomaticsub"] = self.conf["auto_subs"]
 
         if self.conf["embed_subs"]:
-            codec_is_video = (
-                self.conf["codec"] in VIDEO_CONTAINERS or self.conf["only_video"]
-            )
+            codec_is_video = self.codec in VIDEO_CONTAINERS or self.conf["only_video"]
             if not codec_is_video:
                 return
 
@@ -133,19 +135,18 @@ class OptionsBuilder:
     def _build_video_opts(self, opts: dict[str, Any]) -> None:
         opts["format"] = self._parse_quality()
 
-        if self.conf["codec"] in VIDEO_CONTAINERS:
+        if self.codec in VIDEO_CONTAINERS:
             opts["postprocessors"].append(
                 {
                     "key": "FFmpegVideoConvertor",
-                    "preferedformat": self.conf["codec"],
+                    "preferedformat": self.codec,
                 }
             )
 
     def _build_audio_opts(self, opts: dict[str, Any]) -> None:
-        codec = self.conf["codec"]
-        if codec in AUDIO_CODECS:
+        if self.codec in AUDIO_CODECS:
             self._build_audio_only_opts(opts)
-        elif codec in VIDEO_CONTAINERS:
+        elif self.codec in VIDEO_CONTAINERS:
             self._build_video_with_audio_opts(opts)
 
     def _build_audio_only_opts(self, opts: dict[str, Any]) -> None:
@@ -153,7 +154,7 @@ class OptionsBuilder:
         opts["postprocessors"].append(
             {
                 "key": "FFmpegExtractAudio",
-                "preferredcodec": self.conf["codec"],
+                "preferredcodec": self.codec,
                 "preferredquality": str(self.conf["kbps"]),
             }
         )
@@ -169,13 +170,13 @@ class OptionsBuilder:
             opts["writethumbnail"] = True
 
     def _build_video_with_audio_opts(self, opts: dict[str, Any]) -> None:
-        audio_ext = VIDEO_CONTAINER_AUDIO_MAP[self.conf["codec"]]
+        audio_ext = VIDEO_CONTAINER_AUDIO_MAP[self.codec]
 
         opts["format"] = f"{self._parse_quality()}+bestaudio[ext={audio_ext}]/best"
 
         opts["postprocessors"].append(
             {
                 "key": "FFmpegVideoConvertor",
-                "preferedformat": self.conf["codec"],
+                "preferedformat": self.codec,
             }
         )
