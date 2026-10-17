@@ -160,7 +160,7 @@ wheels = [
 
 [[package]]
 name = "fm-dlp-core"
-version = "0.3.8.5"
+version = "0.3.8.6"
 source = { editable = "." }
 dependencies = [
     { name = "mutagen" },

@@ -694,11 +694,11 @@ Examples of formatting search results from different sources. Click each example
 
 [AGPLv3 License](LICENSE) — Built with:
 
-| Library                                             | Purpose                                |
-| --------------------------------------------------- | -------------------------------------- |
-| [yt-dlp](https://github.com/yt-dlp/yt-dlp)          | Download engine supporting 1000+ sites |
-| [ytmusicapi](https://github.com/sigma67/ytmusicapi) | YouTube Music search API               |
-| [mutagen](https://github.com/quodlibet/mutagen)     | Metadata tagging for audio files       |
+| Library                                             | Purpose                                | License                                                           |
+| --------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp)          | Download engine supporting 1000+ sites | [Unlicense](https://github.com/yt-dlp/yt-dlp/blob/master/LICENSE) |
+| [ytmusicapi](https://github.com/sigma67/ytmusicapi) | YouTube Music search API               | [MIT](https://github.com/sigma67/ytmusicapi/blob/main/LICENSE)    |
+| [mutagen](https://github.com/quodlibet/mutagen)     | Metadata tagging for audio files       | [GPL-2.0](https://github.com/quodlibet/mutagen/blob/main/COPYING) |
 
 **Author:** [Fkernel653](https://github.com/Fkernel653)
 
