@@ -5,7 +5,7 @@ build-backend = "uv_build"
 [project]
 name = "fm-dlp-core"
 description = "Async Python wrapper over yt-dlp for searching and downloading from YouTube, YTMusic, and 1000+ sites"
-version = "0.3.4.5"
+version = "0.3.8.5"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "AGPL-3.0-only"
